@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "protoc/gen/twirp_ruby"
+require "twirp/protoc_plugin"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure

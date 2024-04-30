@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-require_relative "lib/protoc/gen/twirp_ruby/version"
+require_relative "lib/twirp/protoc_plugin/version"
 
 Gem::Specification.new do |spec|
   spec.name = "protoc-gen-twirp_ruby"
-  spec.version = Protoc::Gen::TwirpRuby::VERSION
+  spec.version = Twirp::ProtocPlugin::VERSION
   spec.authors = ["Darron Schall", "Daniel Morrison", "Chris Gaffney"]
   spec.email = "info@collectiveidea.com"
 
