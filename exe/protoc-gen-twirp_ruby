@@ -1,3 +1,26 @@
 #!/usr/bin/env ruby
 
-require "protoc/gen/protoc_plugin"
+# frozen_string_literal: true
+
+require "stringio"
+require_relative "../lib/google/protobuf/compiler/plugin_pb"
+require_relative "../lib/twirp/protoc_plugin"
+
+request = Google::Protobuf::Compiler::CodeGeneratorRequest.decode($stdin.read)
+response = Google::Protobuf::Compiler::CodeGeneratorResponse.new
+
+request.proto_file.each do |proto_file|
+  output = StringIO.new
+  output << "# from file: #{proto_file.name}\n"
+  output << "# package: #{proto_file.package}\n"
+  output << "require \"google/protobuf\"\n"
+
+  # TODO: Loop over services in file and generate properly
+
+  file = Google::Protobuf::Compiler::CodeGeneratorResponse::File.new
+  file.name = "#{proto_file.name.sub(".proto", "")}_service.rb"
+  file.content = output.string
+  response.file << file
+end
+
+$stdout << response.to_proto
