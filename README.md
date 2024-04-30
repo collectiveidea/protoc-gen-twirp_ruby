@@ -1,24 +1,43 @@
-# Twirp::Ruby
+# protoc-gen-twirp_ruby 
 
-TODO: Delete this and the text below, and describe your gem
+This gem provides a `protoc` plugin that generates [Twirp-Ruby](https://github.com/arthurnn/twirp-ruby) services and clients.
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/protoc/gen/twirp_ruby`. To experiment with that code, run `bin/console` for an interactive prompt.
+**NOTE:** Twirp-Ruby already has a protoc plugin available at https://github.com/arthurnn/twirp-ruby/tree/main/protoc-gen-twirp_ruby and released as a `go` module.
+This project creates an alternative plugin written in Ruby that is meant to be a more easily accessible alternative.
 
 ## Installation
 
-TODO: Replace `UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG` with your gem name right after releasing it to RubyGems.org. Please do not do it earlier due to security reasons. Alternatively, replace this section with instructions to install your gem from git if you don't plan to release to RubyGems.org.
+### Install `protoc`
+
+The [Protocol Buffers](https://protobuf.dev) `protoc` command is used to auto-generate code from `.proto` files.
+
+ * MacOS: `brew install protobuf`
+ * Ubuntu/Debian: `sudo apt-get install -y protobuf`
+ * Or download pre-compiled binaries: https://github.com/protocolbuffers/protobuf/releases
+
+`protoc` is able to read `.proto` files and generate the message parsers in multiple languages, including Ruby (using the `--ruby_out` option). It does not generate Twirp services and clients; that is where our plugin comes in.
+
+### Install the `protoc-gen-twirp_ruby ` plugin
 
 Install the gem and add to the application's Gemfile by executing:
 
-    $ bundle add UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+```bash
+bundle add protoc-gen-twirp_ruby --group "development, test"
+````
 
 If bundler is not being used to manage dependencies, install the gem by executing:
 
-    $ gem install UPDATE_WITH_YOUR_GEM_NAME_IMMEDIATELY_AFTER_RELEASE_TO_RUBYGEMS_ORG
+```bash
+gem install protoc-gen-twirp_ruby
+```
 
 ## Usage
 
-TODO: Write usage instructions here
+Once `protoc` and the `protoc-gen-twirp_ruby` gem is installed, pass `--twirp_ruby_out` to generate Twirp-Ruby code:
+
+```bash
+protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. ./path/to/service.proto
+```
 
 ## Development
 
@@ -28,4 +47,4 @@ To install this gem onto your local machine, run `bundle exec rake install`. To 
 
 ## Contributing
 
-Bug reports and pull requests are welcome on GitHub at https://github.com/[USERNAME]/protoc-gen-twirp_ruby.
+Bug reports and pull requests are welcome on GitHub at https://github.com/collectiveidea/protoc-gen-twirp_ruby.
