@@ -41,9 +41,24 @@ protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. ./path/to/service.proto
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+After checking out the repo, run `bin/setup` to install dependencies. Then, run `bundle exec rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+For continued development purposes, we can route `protoc` to the local repo code for the plugin and generate against the example via:
+
+```bash
+protoc --plugin=protoc-gen-twirp_ruby=./exe/protoc-gen-twirp_ruby --ruby_out=. --twirp_ruby_out=. ./example/hello_world.proto
+```
+
+The local code for the gem can also be installed via `bundle exec rake install` to omit the `--plugin=protoc-gen-twirp_ruby=` option from `protoc`:
+
+```bash
+bundle exec rake install
+protoc --ruby_out=. --twirp_ruby_out=. ./example/hello_world.proto
+```
+
+## Releasing
+
+To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 
