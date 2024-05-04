@@ -58,9 +58,9 @@ PLATFORMS
 
 DEPENDENCIES
   protoc-gen-twirp_ruby!
-  rake (~> 13.0)
-  rspec (~> 3.0)
-  standard (~> 1.3)
+  rake
+  rspec
+  standard
 
 BUNDLED WITH
    2.4.3
