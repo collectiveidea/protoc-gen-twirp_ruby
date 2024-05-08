@@ -1,0 +1,140 @@
+#!/usr/bin/env ruby
+
+# frozen_string_literal: true
+
+require_relative "../../lib/google/protobuf/compiler/plugin_pb"
+require_relative "../../lib/twirp/protoc_plugin"
+require "open3"
+
+# A simple `protoc` plugin that aids in the development of other plugins. Specifically,
+# this plugin was designed to capture the input that protoc passes to plugins: a string
+# containing an encoded `Google::Protobuf::Compiler::CodeGeneratorRequest` message on STDIN
+# that plugins read and decode.
+#
+# When passing "type=binary" as an option, this plugin will save the encoded message as a
+# binary file. This file can then be used to aid in plugin debugging or as an example input
+# during testing.
+#
+# When passing "type=text", this plugin will save the encoded message as a `protoc` decoded text
+# file. This is helpful to provide a human-readable `Google::Protobuf::Compiler::CodeGeneratorRequest`
+# to further aid in understanding.
+#
+# To convert the decoded text back into a binary message, use `protoc --encode`, e.g.:
+#   `cat example_code_gen_request_decoded.txt | protoc --encode google.protobuf.compiler.CodeGeneratorRequest ./proto/google/protobuf/compiler/plugin.proto`
+#
+# Similar in concept to:
+#   * protoc-gen-debug: https://github.com/lyft/protoc-gen-star/tree/v0.6.2/protoc-gen-debug
+#   * protoc-gen-capture: https://github.com/arnehormann/protoc-gen-capture
+#
+# Usage:
+#   protoc --plugin=protoc-gen-request_fixture=./spec/support/protoc-gen-request_fixture \
+#     --request_fixture_out=./spec/fixtures/. \
+#     --request_fixture_opt=type=binary \
+#     --request_fixture_opt=filename=example_request_pb.bin \
+#     ./example/hello_world.proto
+#
+# Required --request_fixture_opt= options:
+#   * type=binary or type=text
+#   * filename=<valid_file_name>
+#
+# Known Limitation(s):
+#   * When type=binary, the 'out' directory is not respected. The file is written to the
+#     current directory instead.
+
+def main
+  request = Google::Protobuf::Compiler::CodeGeneratorRequest.decode($stdin.read)
+  begin
+    options = extract_params(request.parameter)
+  rescue ArgumentError => e
+    # Per the `CodeGeneratorResponse` message documentation in plugin.proto:
+    # Errors which indicate a problem in protoc itself -- such as the input
+    # CodeGeneratorRequest being unparseable -- should be reported by writing a
+    # message to stderr and exiting with a non-zero status code.
+    $stderr << e << "\n"
+    exit 1
+  end
+
+  $stdout << generate(request, options)
+end
+
+# @param params [String] the parameters of the code gen request in "key1=value1,key2=value2" format.
+#   Valid parameters are type=binary or type=text, and filename=<valid_file_name>. Both type and filename
+#   are required.
+# @return [Hash]
+#   * :type [String] either "binary" or "text". Default "binary".
+#   * :filename [String] the filename to use for saving the request.
+# @raise [ArgumentError] when a required parameter is missing or invalid.
+def extract_params(params)
+  opts = {
+    type: "binary",
+    filename: ""
+  }
+
+  # Process the options passed to the plugin from `protoc`.
+  params.split(",").each do |param|
+    key, value = param.split("=")
+    if key == "type"
+      valid_type_options = %w[binary text]
+      if valid_type_options.include? value
+        opts[:type] = value
+      else
+        raise ArgumentError, "Invalid output type: #{value}. Expected one of #{valid_type_options}"
+      end
+    elsif key == "filename"
+      opts[:filename] = enforce_valid_filename(value)
+    else
+      raise ArgumentError, "Invalid option: #{key}"
+    end
+  end
+
+  # Extra parameter validation
+  if opts[:filename].empty?
+    raise ArgumentError, "Filename not specified. Must pass e.g. '--request_fixture_opt=filename=example_request_pb.bin' to protoc."
+  end
+
+  opts
+end
+
+# Convert all invalid file name characters to "_"
+def enforce_valid_filename(filename)
+  filename&.gsub(/[\x00\/\\:\*\?\"<>\|]/, "_")
+end
+
+# @param request [Google::Protobuf::Compiler::CodeGeneratorRequest] the incoming request from `protoc`
+# @param options [Hash]
+# @return [String] an encoded `Google::Protobuf::Compiler::CodeGeneratorResponse` message to pass back to `protoc`
+def generate(request, options)
+  response = Google::Protobuf::Compiler::CodeGeneratorResponse.new
+  response.supported_features = Google::Protobuf::Compiler::CodeGeneratorResponse::Feature::FEATURE_PROTO3_OPTIONAL
+
+  if options[:type] == "binary"
+    # `CodeGeneratorResponse` can only write text (not binary) output. To handle
+    # the binary case, we return an empty response so that `protoc` doesn't generate anything
+    # while we open and write the binary file ourselves.
+
+    # TODO: Can we read the "out" protoc plugin param from the request to know where to
+    # place this file? For now we just put it in the current directory.
+    # A workaround might be to copy the value of `--request_fixture_out=` to a
+    # param we can read as `--request_fixture_opt=out=` so we have the output path.
+    File.binwrite(options[:filename], request.to_proto)
+
+    # Do not add anything to the response; no text files to be written.
+
+  else # options[:type] == "text"
+    # Use `protoc` to decode the binary request message as text, and use that as the
+    # content of the file the plugin output.
+    stdout_str, _stderr_str, _status = Open3.capture3(
+      "protoc --decode google.protobuf.compiler.CodeGeneratorRequest ./proto/google/protobuf/compiler/plugin.proto",
+      stdin_data: request.to_proto
+    )
+
+    file = Google::Protobuf::Compiler::CodeGeneratorResponse::File.new
+    file.name = options[:filename]
+    file.content = stdout_str
+    response.file << file
+  end
+
+  response.to_proto
+end
+
+main
