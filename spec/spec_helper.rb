@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "rspec/file_fixtures"
 require "twirp/protoc_plugin"
 
 RSpec.configure do |config|
