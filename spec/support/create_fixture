@@ -1,0 +1,62 @@
+#!/usr/bin/env ruby
+
+# frozen_string_literal: true
+
+# This script is a simple wrapper for using `protoc-gen-request_fixture` with `protoc` that
+# allows easier processing of command line arguments.
+#
+# Example Usage: ./spec/support/create_fixture -b -f hello_world_request.bin ./spec/fixtures/hello_world.proto
+
+require "optparse"
+
+options = {
+  out: "./spec/fixtures"
+}
+
+parser = OptionParser.new do |opts|
+  opts.on("-b", "--binary", "Save fixture as file containing binary protobuf message.")
+  opts.on("-t", "--text", "Save fixture as file containing decoded protobuf text.")
+  opts.on("-o [OUT]", "--out [OUT]", "The output path to place the request file into. Defaults to './spec/fixtures'.")
+  opts.on("-f NAME", "--filename NAME", "The filename to use for saving the request.")
+end
+parser.banner = "Usage: create_fixture [options] example.proto [example2.proto ...]"
+
+# Process command line options and extract the remaining proto file(s)
+proto_files = parser.parse!(into: options)
+
+# Validate options
+filename = options[:filename]
+fail "Missing filename. Must specify `-f` option with a valid value." if filename.nil? || filename.empty?
+# Convert all invalid file name characters to "_"
+filename = filename.gsub(/[\x00\/\\:\*\?\"<>\|]/, "_")
+
+binary = options[:binary]
+text = options[:text]
+fail "No output type format specified. Must specify either `-b` or `-t`" if binary.nil? && text.nil?
+fail "Cannot write both binary and text output at the same time. Must specify either `-b` or `-t`" if binary && text
+
+fail "Missing proto file(s).\n#{parser.help}" if proto_files.empty?
+
+# Invoke the protoc command, passing the arguments through.
+
+if text
+  # In text mode, the plugin is able to write a string file to the output directly properly.
+  %x(protoc --plugin=protoc-gen-request_fixture=./spec/support/protoc-gen-request_fixture \
+    --request_fixture_out=#{options[:out]} \
+    --request_fixture_opt=type=text \
+    --request_fixture_opt=filename=#{filename} \
+    #{proto_files.join(" ")})
+end
+
+if binary
+  # In binary mode, the plugin is unable to write a binary file to the output directly. Instead,
+  # it creates a binary file in the current directory.
+  %x(protoc --plugin=protoc-gen-request_fixture=./spec/support/protoc-gen-request_fixture \
+    --request_fixture_out=#{options[:out]} \
+    --request_fixture_opt=type=binary \
+    --request_fixture_opt=filename=#{filename} \
+    #{proto_files.join(" ")})
+
+  # Move the generated binary file to the proper output location
+  `mv #{filename} #{options[:out]}`
+end
