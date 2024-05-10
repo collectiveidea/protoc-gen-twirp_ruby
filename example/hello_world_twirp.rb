@@ -8,14 +8,14 @@ require_relative "hello_world_pb"
 
 module Example
   module HelloWorld
-    class HelloWorldServiceService < ::Twirp::Service
+    class HelloWorldService < ::Twirp::Service
       package "example.hello_world"
       service "HelloWorldService"
       rpc :Hello, HelloRequest, HelloResponse, ruby_method: :hello
     end
 
-    class HelloWorldServiceClient < ::Twirp::Client
-      client_for HelloWorldServiceService
+    class HelloWorldClient < ::Twirp::Client
+      client_for HelloWorldService
     end
   end
 end
