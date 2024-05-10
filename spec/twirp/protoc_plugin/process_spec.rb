@@ -38,4 +38,52 @@ RSpec.describe Twirp::ProtocPlugin do
       end
     EOF
   end
+
+  describe "#strip_extension" do
+    def call_private_method_with(filename)
+      described_class.send(:strip_extension, filename)
+    end
+
+    it "strips the extension and preserves the path" do
+      output = call_private_method_with("spec/fixtures/hello.proto")
+      expect(output).to eq("spec/fixtures/hello")
+    end
+
+    it "strips the extension for a filename without a path" do
+      output = call_private_method_with("hello.proto")
+      expect(output).to eq("hello")
+    end
+  end
+
+  describe "#twirp_output_filename" do
+    def call_private_method_with(filename)
+      described_class.send(:twirp_output_filename, filename)
+    end
+
+    it "returns the correct twirp filename with path in tact" do
+      output = call_private_method_with("spec/fixtures/hello.proto")
+      expect(output).to eq("spec/fixtures/hello_twirp.rb")
+    end
+
+    it "returns the correct twirp filename when no path present" do
+      output = call_private_method_with("hello.proto")
+      expect(output).to eq("hello_twirp.rb")
+    end
+  end
+
+  describe "#relative_ruby_protobuf" do
+    def call_private_method_with(filename)
+      described_class.send(:relative_ruby_protobuf, filename)
+    end
+
+    it "returns the correct ruby relative filename when path is present" do
+      output = call_private_method_with("spec/fixtures/hello.proto")
+      expect(output).to eq("hello_pb")
+    end
+
+    it "returns the correct ruby relative filename when no path present" do
+      output = call_private_method_with("hello.proto")
+      expect(output).to eq("hello_pb")
+    end
+  end
 end
