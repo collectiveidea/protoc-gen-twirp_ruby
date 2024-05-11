@@ -47,14 +47,16 @@ module Twirp
           service_name = service.name
           # The generated service class name should end in "Service"; Only append the
           # suffix if the service is not already well-named.
-          service_class_name = if service_name.end_with?("Service")
-            service_name
-          else
-            service_name + "Service"
-          end
+          service_class_name = camel_case(
+            if service_name.end_with?("Service")
+              service_name
+            else
+              service_name + "Service"
+            end
+          )
 
           # Generate service class
-          output << line("class #{camel_case(service_class_name)} < ::Twirp::Service", indent_level)
+          output << line("class #{service_class_name} < ::Twirp::Service", indent_level)
           indent_level += 1
 
           output << line("package \"#{@proto_file.package}\"", indent_level) unless @proto_file.package.to_s.empty?
@@ -77,12 +79,12 @@ module Twirp
           # Generate client class
 
           # Strip the "Service" suffix if present for better readability.
-          client_class_name = service_name.delete_suffix("Service") + "Client"
+          client_class_name = camel_case(service_name.delete_suffix("Service") + "Client")
 
-          output << line("class #{camel_case(client_class_name)} < ::Twirp::Client", indent_level)
+          output << line("class #{client_class_name} < ::Twirp::Client", indent_level)
           indent_level += 1
 
-          output << line("client_for #{camel_case(service_class_name)}", indent_level)
+          output << line("client_for #{service_class_name}", indent_level)
 
           indent_level -= 1
           output << line("end", indent_level)
