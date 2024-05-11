@@ -57,36 +57,25 @@ module Twirp
 
           # Generate service class
           output << line("class #{service_class_name} < ::Twirp::Service", indent_level)
-          indent_level += 1
-
-          output << line("package \"#{@proto_file.package}\"", indent_level) unless @proto_file.package.to_s.empty?
-          output << line("service \"#{service_name}\"", indent_level)
+          output << line("  package \"#{@proto_file.package}\"", indent_level) unless @proto_file.package.to_s.empty?
+          output << line("  service \"#{service_name}\"", indent_level)
           service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
-            output << rpc_line(
-              method.name,
-              convert_to_ruby_type(method.input_type, current_module),
-              convert_to_ruby_type(method.output_type, current_module),
-              snake_case(method.name),
-              indent_level
-            )
+            input_type = convert_to_ruby_type(method.input_type, current_module)
+            output_type = convert_to_ruby_type(method.output_type, current_module)
+            ruby_method_name = snake_case(method.name)
+
+            output << line("  rpc :#{method.name}, #{input_type}, #{output_type}, ruby_method: :#{ruby_method_name}", indent_level)
           end
-
-          indent_level -= 1
           output << line("end", indent_level)
-
-          output << "\n"
 
           # Generate client class
 
           # Strip the "Service" suffix if present for better readability.
           client_class_name = camel_case(service_name.delete_suffix("Service") + "Client")
 
+          output << "\n"
           output << line("class #{client_class_name} < ::Twirp::Client", indent_level)
-          indent_level += 1
-
-          output << line("client_for #{service_class_name}", indent_level)
-
-          indent_level -= 1
+          output << line("  client_for #{service_class_name}", indent_level)
           output << line("end", indent_level)
         end
 
@@ -108,11 +97,6 @@ module Twirp
       # @return [String] the input properly indented with a tailing newline added
       def line(input, indent_level = 0)
         "#{"  " * indent_level}#{input}\n"
-      end
-
-      # @return [String] the `rpc` DSL line for a method within a service
-      def rpc_line(rpc_name, rpc_input, rpc_output, rpc_ruby_method, indent_level)
-        line("rpc :#{rpc_name}, #{rpc_input}, #{rpc_output}, ruby_method: :#{rpc_ruby_method}", indent_level)
       end
 
       # Converts either a package string like ".some.example.api" or a namespaced
