@@ -87,22 +87,6 @@ RSpec.describe Twirp::ProtocPlugin do
     end
   end
 
-  describe "#strip_extension" do
-    def call_private_method_with(filename)
-      described_class.send(:strip_extension, filename)
-    end
-
-    it "strips the extension and preserves the path" do
-      output = call_private_method_with("spec/fixtures/hello.proto")
-      expect(output).to eq("spec/fixtures/hello")
-    end
-
-    it "strips the extension for a filename without a path" do
-      output = call_private_method_with("hello.proto")
-      expect(output).to eq("hello")
-    end
-  end
-
   describe "#twirp_output_filename" do
     def call_private_method_with(filename)
       described_class.send(:twirp_output_filename, filename)

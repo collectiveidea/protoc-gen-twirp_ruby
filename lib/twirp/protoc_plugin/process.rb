@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require_relative "../../core_ext/file/strip_extension"
 require_relative "../../google/protobuf/compiler/plugin_pb"
 require_relative "code_generator"
 
@@ -30,22 +31,12 @@ module Twirp
         response.to_proto
       end
 
-      private
-
-      # @param filename [String] a filename string (with optional path),
-      #   e.g. "some/example/hello.proto"
-      # @return [String] the filename (preserving optional path) minus the file extension,
-      #   e.g. "some/example/hello"
-      def strip_extension(filename)
-        filename.sub(/#{File.extname(filename)}$/, "")
-      end
-
       # @param filename [String] the filename (with optional path) for the proto file,
       #   e.g. "some/example/hello.proto"
       # @return [String] the output filename for the proto file's generated twirp code,
       #   e.g. "some/example/hello_twirp.rb"
       def twirp_output_filename(filename)
-        strip_extension(filename) + "_twirp.rb"
+        File.strip_extension(filename) + "_twirp.rb"
       end
 
       # @param filename [String] the filename (with optional path) for the proto file,
