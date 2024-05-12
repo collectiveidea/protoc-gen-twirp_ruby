@@ -5,7 +5,7 @@ class File
   #   e.g. "some/example/hello.proto"
   # @return [String] the filename (preserving optional path) minus the file extension,
   #   e.g. "some/example/hello"
-  def self.strip_extension(filename)
+  def self.delete_extension(filename)
     filename.delete_suffix(File.extname(filename))
   end
 end
