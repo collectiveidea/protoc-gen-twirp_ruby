@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../google/protobuf/compiler/plugin_pb"
-require_relative "../../core_ext/string/capitalize_first"
+require_relative "../../core_ext/string/camel_case"
 require "stringio"
 
 module Twirp
@@ -45,13 +45,12 @@ module Twirp
           service_name = service.name
           # The generated service class name should end in "Service"; Only append the
           # suffix if the service is not already well-named.
-          service_class_name = camel_case(
-            if service_name.end_with?("Service")
-              service_name
-            else
-              service_name + "Service"
-            end
-          )
+          service_class_name = if service_name.end_with?("Service")
+            service_name
+          else
+            service_name + "Service"
+          end
+          service_class_name = service_class_name.camel_case
 
           # Generate service class
           output << line("class #{service_class_name} < ::Twirp::Service", indent_level)
@@ -69,7 +68,7 @@ module Twirp
           # Generate client class
 
           # Strip the "Service" suffix if present for better readability.
-          client_class_name = camel_case(service_name.delete_suffix("Service") + "Client")
+          client_class_name = (service_name.delete_suffix("Service") + "Client").camel_case
 
           output << "\n"
           output << line("class #{client_class_name} < ::Twirp::Client", indent_level)
@@ -109,7 +108,7 @@ module Twirp
       def split_to_constants(package_or_message)
         package_or_message
           .split(".")
-          .map { |s| camel_case(s) }
+          .map { |s| s.camel_case }
       end
 
       # Converts a protobuf message type to a string containing
@@ -134,25 +133,6 @@ module Twirp
           s[current_module.size + 2..]
         else
           s
-        end
-      end
-
-      # Converts input to either lowerCamelCase or UpperCamelCase.
-      #
-      # Inspired by https://github.com/rails/rails/blob/6f0d1ad14b92b9f5906e44740fce8b4f1c7075dc/activesupport/lib/active_support/inflector/methods.rb#L70
-      #
-      # @param input [String] the input string to convert to CamelCase
-      # @param uppercase_first_letter [Boolean] true for UpperCamelCase, false for lowerCamelCase
-      # @return [String] the converted input
-      def camel_case(input, uppercase_first_letter = true)
-        s = if uppercase_first_letter
-          input.capitalize_first
-        else
-          input
-        end
-
-        s.gsub(/_([a-z\d]*)/i) do
-          $1.capitalize
         end
       end
 

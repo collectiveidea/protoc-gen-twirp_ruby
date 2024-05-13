@@ -59,32 +59,6 @@ RSpec.describe Twirp::ProtocPlugin::CodeGenerator do
     end
   end
 
-  describe "#camel_case" do
-    def call_private_method_with(input, uppercase_first_letter = true)
-      code_generator.send(:camel_case, input, uppercase_first_letter)
-    end
-
-    it "converts to upper camel case" do
-      output = call_private_method_with("example_input")
-      expect(output).to eq("ExampleInput")
-    end
-
-    it "converts to lower camel case" do
-      output = call_private_method_with("example_input", false)
-      expect(output).to eq("exampleInput")
-    end
-
-    it "works with digits and non-words chars" do
-      output = call_private_method_with("example_input8_abc-de")
-      expect(output).to eq("ExampleInput8Abc-de")
-    end
-
-    it "works with a lowercase after a digit" do
-      output = call_private_method_with("a2z")
-      expect(output).to eq("A2z")
-    end
-  end
-
   describe "#snake_case" do
     def call_private_method_with(input)
       code_generator.send(:snake_case, input)
