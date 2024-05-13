@@ -2,6 +2,7 @@
 
 require_relative "../../google/protobuf/compiler/plugin_pb"
 require_relative "../../core_ext/string/camel_case"
+require_relative "../../core_ext/string/snake_case"
 require "stringio"
 
 module Twirp
@@ -59,7 +60,7 @@ module Twirp
           service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
             input_type = convert_to_ruby_type(method.input_type, current_module)
             output_type = convert_to_ruby_type(method.output_type, current_module)
-            ruby_method_name = snake_case(method.name)
+            ruby_method_name = method.name.snake_case
 
             output << line("  rpc :#{method.name}, #{input_type}, #{output_type}, ruby_method: :#{ruby_method_name}", indent_level)
           end
@@ -134,19 +135,6 @@ module Twirp
         else
           s
         end
-      end
-
-      # Converts input to lower_snake_case.
-      #
-      # Inspired by https://github.com/rails/rails/blob/6f0d1ad14b92b9f5906e44740fce8b4f1c7075dc/activesupport/lib/active_support/inflector/methods.rb#L99
-      #
-      # @param input [String] the input string to convert to lower_snake_case
-      # @return [String] the converted input
-      def snake_case(input)
-        input
-          .gsub(/([A-Z\d]+)([A-Z][a-z])/, '\1_\2')
-          .gsub(/([a-z\d])([A-Z])/, '\1_\2')
-          .downcase
       end
     end
   end

@@ -58,30 +58,4 @@ RSpec.describe Twirp::ProtocPlugin::CodeGenerator do
       expect(type).to eq("Google::Protobuf::Empty")
     end
   end
-
-  describe "#snake_case" do
-    def call_private_method_with(input)
-      code_generator.send(:snake_case, input)
-    end
-
-    it "does nothing when input is already snake_case" do
-      output = call_private_method_with("example_input")
-      expect(output).to eq("example_input")
-    end
-
-    it "converts UpperCamelCase to lower_snake_case" do
-      output = call_private_method_with("ExampleInputValue")
-      expect(output).to eq("example_input_value")
-    end
-
-    it "downcases an titleized input" do
-      output = call_private_method_with("Example")
-      expect(output).to eq("example")
-    end
-
-    it "works with digits and non-words chars" do
-      output = call_private_method_with("ExampleInput8ABCDef")
-      expect(output).to eq("example_input8_abc_def")
-    end
-  end
 end
