@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require_relative "../../google/protobuf/compiler/plugin_pb"
+require_relative "../../core_ext/string/camel_case"
+require_relative "../../core_ext/string/snake_case"
 require "stringio"
 
 module Twirp
@@ -44,13 +46,12 @@ module Twirp
           service_name = service.name
           # The generated service class name should end in "Service"; Only append the
           # suffix if the service is not already well-named.
-          service_class_name = camel_case(
-            if service_name.end_with?("Service")
-              service_name
-            else
-              service_name + "Service"
-            end
-          )
+          service_class_name = if service_name.end_with?("Service")
+            service_name
+          else
+            service_name + "Service"
+          end
+          service_class_name = service_class_name.camel_case
 
           # Generate service class
           output << line("class #{service_class_name} < ::Twirp::Service", indent_level)
@@ -59,7 +60,7 @@ module Twirp
           service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
             input_type = convert_to_ruby_type(method.input_type, current_module)
             output_type = convert_to_ruby_type(method.output_type, current_module)
-            ruby_method_name = snake_case(method.name)
+            ruby_method_name = method.name.snake_case
 
             output << line("  rpc :#{method.name}, #{input_type}, #{output_type}, ruby_method: :#{ruby_method_name}", indent_level)
           end
@@ -68,7 +69,7 @@ module Twirp
           # Generate client class
 
           # Strip the "Service" suffix if present for better readability.
-          client_class_name = camel_case(service_name.delete_suffix("Service") + "Client")
+          client_class_name = (service_name.delete_suffix("Service") + "Client").camel_case
 
           output << "\n"
           output << line("class #{client_class_name} < ::Twirp::Client", indent_level)
@@ -108,7 +109,7 @@ module Twirp
       def split_to_constants(package_or_message)
         package_or_message
           .split(".")
-          .map { |s| camel_case(s) }
+          .map { |s| s.camel_case }
       end
 
       # Converts a protobuf message type to a string containing
@@ -134,50 +135,6 @@ module Twirp
         else
           s
         end
-      end
-
-      # Converts input to either lowerCamelCase or UpperCamelCase.
-      #
-      # Inspired by https://github.com/rails/rails/blob/6f0d1ad14b92b9f5906e44740fce8b4f1c7075dc/activesupport/lib/active_support/inflector/methods.rb#L70
-      #
-      # @param input [String] the input string to convert to CamelCase
-      # @param uppercase_first_letter [Boolean] true for UpperCamelCase, false for lowerCamelCase
-      # @return [String] the converted input
-      def camel_case(input, uppercase_first_letter = true)
-        s = if uppercase_first_letter
-          capitalize_first(input)
-        else
-          input
-        end
-
-        s.gsub(/_([a-z\d]*)/i) do
-          $1.capitalize
-        end
-      end
-
-      # Capitalizes the first letter in the input string.,
-      #
-      # Inspired by https://github.com/rails/rails/blob/6f0d1ad14b92b9f5906e44740fce8b4f1c7075dc/activesupport/lib/active_support/inflector/methods.rb#L166
-      #
-      # @param input [String] the input string to capitalize the first letter of
-      # @return [String] the input with the first letter capitalized
-      def capitalize_first(input)
-        return "" unless input.length > 0
-
-        input[0].upcase + input[1..]
-      end
-
-      # Converts input to lower_snake_case.
-      #
-      # Inspired by https://github.com/rails/rails/blob/6f0d1ad14b92b9f5906e44740fce8b4f1c7075dc/activesupport/lib/active_support/inflector/methods.rb#L99
-      #
-      # @param input [String] the input string to convert to lower_snake_case
-      # @return [String] the converted input
-      def snake_case(input)
-        input
-          .gsub(/([A-Z\d]+)([A-Z][a-z])/, '\1_\2')
-          .gsub(/([a-z\d])([A-Z])/, '\1_\2')
-          .downcase
       end
     end
   end
