@@ -2,12 +2,13 @@
 [![Build](https://github.com/collectiveidea/protoc-gen-twirp_ruby/actions/workflows/main.yml/badge.svg)](https://github.com/collectiveidea/protoc-gen-twirp_ruby/actions/workflows/main.yml)
 [![Ruby Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://github.com/standardrb/standard)
 
-# protoc-gen-twirp_ruby 
+# protoc-gen-twirp_ruby
 
 This gem provides a `protoc` plugin that generates [Twirp-Ruby](https://github.com/arthurnn/twirp-ruby) services and clients.
 
-**NOTE:** Twirp-Ruby already has a protoc plugin available at https://github.com/arthurnn/twirp-ruby/tree/main/protoc-gen-twirp_ruby and released as a `go` module.
-This project creates an alternative plugin written in Ruby that is meant to be a more easily accessible alternative.
+**NOTE:** Twirp-Ruby [already has a protoc plugin available](https://github.com/arthurnn/twirp-ruby/tree/main/protoc-gen-twirp_ruby)
+released as a `go` module. This project creates an alternative plugin written in Ruby and distributed as a gem that
+produces comparable output while being both more familiar and accessible to Ruby developers.
 
 ## Installation
 
@@ -19,21 +20,41 @@ The [Protocol Buffers](https://protobuf.dev) `protoc` command is used to auto-ge
  * Ubuntu/Debian: `sudo apt-get install -y protobuf`
  * Or download pre-compiled binaries: https://github.com/protocolbuffers/protobuf/releases
 
-`protoc` is able to read `.proto` files and generate the message parsers in multiple languages, including Ruby (using the `--ruby_out` option). It does not generate Twirp services and clients; that is where our plugin comes in.
+`protoc` is able to read `.proto` files and generate the message parsers in multiple languages, including Ruby (using
+the `--ruby_out` option). It does not generate Twirp services and clients; that is where our plugin comes in.
 
-### Install the `protoc-gen-twirp_ruby ` plugin
+### Install the `protoc-gen-twirp_ruby` plugin
+ 
+Install the gem by adding it to your Gemfile:
 
-Install the gem and add to the application's Gemfile by executing:
-
-```bash
-bundle add protoc-gen-twirp_ruby --group "development, test"
+```ruby
+group :development, :test do
+  "protoc-gen-twirp_ruby"
+end
 ````
 
-If bundler is not being used to manage dependencies, install the gem by executing:
+Alternatively, install the gem on your system:
 
 ```bash
 gem install protoc-gen-twirp_ruby
 ```
+
+## Migration from the `protoc-gen-twirp_ruby` go module
+
+If you have previously installed the `go` version of the plugin via the [Twirp-Ruby Code Generation wiki page](https://github.com/arthurnn/twirp-ruby/wiki/Code-Generation)
+instructions, then you'll want to uninstall it before invoking the `protoc` command.
+
+```bash
+rm `go env GOPATH`/bin/protoc-gen-twirp_ruby
+```
+
+### Notable plugin differences
+
+This gem generates nearly identical Twirp-Ruby output as the go version plugin. Some notable differences
+that might affect migration include:
+
+ * Generated output code is in [standardrb style](https://github.com/standardrb/standard).
+ * Generated service and client class names are improved for well-named protobuf services. See [#6](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/6).
 
 ## Usage
 
