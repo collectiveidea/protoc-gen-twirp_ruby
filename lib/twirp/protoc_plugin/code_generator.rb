@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../google/protobuf/compiler/plugin_pb"
+require_relative "../../core_ext/string/capitalize_first"
 require "stringio"
 
 module Twirp
@@ -145,7 +146,7 @@ module Twirp
       # @return [String] the converted input
       def camel_case(input, uppercase_first_letter = true)
         s = if uppercase_first_letter
-          capitalize_first(input)
+          input.capitalize_first
         else
           input
         end
@@ -153,18 +154,6 @@ module Twirp
         s.gsub(/_([a-z\d]*)/i) do
           $1.capitalize
         end
-      end
-
-      # Capitalizes the first letter in the input string.,
-      #
-      # Inspired by https://github.com/rails/rails/blob/6f0d1ad14b92b9f5906e44740fce8b4f1c7075dc/activesupport/lib/active_support/inflector/methods.rb#L166
-      #
-      # @param input [String] the input string to capitalize the first letter of
-      # @return [String] the input with the first letter capitalized
-      def capitalize_first(input)
-        return "" unless input.length > 0
-
-        input[0].upcase + input[1..]
       end
 
       # Converts input to lower_snake_case.
