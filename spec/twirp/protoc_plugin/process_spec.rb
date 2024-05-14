@@ -88,7 +88,7 @@ RSpec.describe Twirp::ProtocPlugin do
 
     context "when using a file that imports types from another file" do
       # Generate code gen request fixture:
-      #   `protoc --plugin=protoc-gen-request_fixture=./spec/support/protoc-gen-request_fixture --request_fixture_out=./spec/fixtures/import_type_retention --request_fixture_opt=type=binary --request_fixture_opt=filename=example_code_gen_request_pb.bin --proto_path=./spec/fixtures/import_type_retention example.proto package/actions/asks.proto`
+      #   `./spec/support/create_fixture -b -f example_code_gen_request_pb.bin -o ./spec/fixtures/import_type_retention -I ./spec/fixtures/import_type_retention example.proto package/actions/asks.proto`
       #
       # Decode the binary message with:
       #   `cat ./spec/fixtures/import_type_retention/example_code_gen_request_pb.bin | protoc --decode google.protobuf.compiler.CodeGeneratorRequest ./proto/google/protobuf/compiler/plugin.proto`
