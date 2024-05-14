@@ -1,0 +1,9 @@
+package package.actions.asks;
+
+message RequestAskSnapshot {
+  optional string param = 1;
+}
+
+message AskSnapshot {
+  optional string response = 1;
+}
