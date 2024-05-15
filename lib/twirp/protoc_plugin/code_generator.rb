@@ -10,9 +10,13 @@ module Twirp
     class CodeGenerator
       # @param proto_file [Google::Protobuf::FileDescriptorProto]
       # @param relative_ruby_protobuf [String] e.g. "example_rb.pb"
-      def initialize(proto_file, relative_ruby_protobuf)
+      # @param options [Hash{Symbol => Boolean}]
+      #   * :skip_empty [Boolean] indicating whether generation should skip creating a twirp file
+      #       for proto files that contain no services. Default false.
+      def initialize(proto_file, relative_ruby_protobuf, options)
         @proto_file = proto_file
         @relative_ruby_protobuf = relative_ruby_protobuf
+        @options = options
       end
 
       # @return [String] the generated Twirp::Ruby code for the proto_file
