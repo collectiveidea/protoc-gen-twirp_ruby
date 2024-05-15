@@ -24,6 +24,7 @@ module Twirp
 
         request.proto_file.each do |proto_file| # proto_file: <Google::Protobuf::FileDescriptorProto>
           next unless request.file_to_generate.include?(proto_file.name)
+          next if options[:skip_empty] && !proto_file.has_service?
 
           file = Google::Protobuf::Compiler::CodeGeneratorResponse::File.new
           file.name = proto_file.twirp_output_filename
