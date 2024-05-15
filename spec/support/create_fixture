@@ -5,7 +5,7 @@
 # This script is a simple wrapper for using `protoc-gen-request_fixture` with `protoc` that
 # allows easier processing of command line arguments.
 #
-# Example Usage: ./spec/support/create_fixture -b -f hello_world_request.bin ./spec/fixtures/hello_world.proto
+# Example Usage: ./spec/support/create_fixture -b -f hello_world_request.bin -I ./spec/fixtures/ hello_world.proto
 
 require "optparse"
 
@@ -18,6 +18,7 @@ parser = OptionParser.new do |opts|
   opts.on("-t", "--text", "Save fixture as file containing decoded protobuf text.")
   opts.on("-o [OUT]", "--out [OUT]", "The output path to place the request file into. Defaults to './spec/fixtures'.")
   opts.on("-f NAME", "--filename NAME", "The filename to use for saving the request.")
+  opts.on("-I [PATH1],[PATH2],...", "--proto_path [PATH1],[PATH2],...", "Pass-through proto path(s) to protoc.")
 end
 parser.banner = "Usage: create_fixture [options] example.proto [example2.proto ...]"
 
@@ -37,6 +38,12 @@ fail "Cannot write both binary and text output at the same time. Must specify ei
 
 fail "Missing proto file(s).\n#{parser.help}" if proto_files.empty?
 
+# Convert proto_paths to a series of --proto_path= protoc flags.
+proto_paths = options[:proto_path]
+  &.split(",") # separate the options passed in, which come through as a stringified array
+  &.map { |path| "--proto_path=#{path}" } # convert each option to a "--proto_path=" protoc flag
+  &.join(" ") # combine all of the path flags into a single string separate by spaces to pass to protoc
+
 # Invoke the protoc command, passing the arguments through.
 
 if text
@@ -45,6 +52,7 @@ if text
     --request_fixture_out=#{options[:out]} \
     --request_fixture_opt=type=text \
     --request_fixture_opt=filename=#{filename} \
+    #{proto_paths} \
     #{proto_files.join(" ")})
 end
 
@@ -55,6 +63,7 @@ if binary
     --request_fixture_out=#{options[:out]} \
     --request_fixture_opt=type=binary \
     --request_fixture_opt=filename=#{filename} \
+    #{proto_paths} \
     #{proto_files.join(" ")})
 
   # Move the generated binary file to the proper output location
