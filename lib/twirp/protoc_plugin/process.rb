@@ -17,7 +17,7 @@ module Twirp
       def process(input)
         request = Google::Protobuf::Compiler::CodeGeneratorRequest.decode(input)
 
-        options = extract_params(request.parameter)
+        options = extract_options(request.parameter)
 
         response = Google::Protobuf::Compiler::CodeGeneratorResponse.new
         response.supported_features = Google::Protobuf::Compiler::CodeGeneratorResponse::Feature::FEATURE_PROTO3_OPTIONAL
@@ -47,7 +47,7 @@ module Twirp
       #       for proto files that contain no services. Default false.
       # @raise [ArgumentError] when a required parameter is missing, a parameter value is invalid, or
       #   an unrecognized parameter is present on the command line
-      def extract_params(params)
+      def extract_options(params)
         opts = {
           skip_empty: false
         }
