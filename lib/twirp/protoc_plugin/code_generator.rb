@@ -43,6 +43,10 @@ module Twirp
 
         current_module = "::" + modules.join("::")
 
+        unless @proto_file.has_service?
+          output << line("# No services found; To skip generating this file, specify `--twirp_ruby_opt=skip-empty`.", indent_level)
+        end
+
         @proto_file.service.each_with_index do |service, index| # service: <Google::Protobuf::ServiceDescriptorProto>
           # Add newline between service definitions when multiple are generated
           output << "\n" if index > 0

@@ -137,6 +137,7 @@ RSpec.describe Twirp::ProtocPlugin do
             module Package
               module Actions
                 module Asks
+                  # No services found; To skip generating this file, specify `--twirp_ruby_opt=skip-empty`.
                 end
               end
             end
