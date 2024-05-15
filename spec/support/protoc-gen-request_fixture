@@ -78,7 +78,7 @@ def extract_params(params)
 
   # Process the options passed to the plugin from `protoc`.
   params.split(",").each do |param|
-    # In the event value contains an =, we want to leave that in tact.
+    # In the event value contains an =, we want to leave that intact.
     # Limit the split to just separate the key out.
     key, value = param.split("=", 2)
     if key == "type"
