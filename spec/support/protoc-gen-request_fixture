@@ -57,22 +57,30 @@ def main
   $stdout << generate(request, options)
 end
 
-# @param params [String] the parameters of the code gen request in "key1=value1,key2=value2" format.
-#   Valid parameters are type=binary or type=text, and filename=<valid_file_name>. Both type and filename
-#   are required.
+# @param params [String] the parameters of the code gen request in comma-separate stringified
+#   array format, e.g. "type=binary,filename=example.txt,parameter=key1=value1,parameter=key2=value2,parameter=some-flag"
+#
+#   Valid parameters are type=binary or type=text, filename=<valid_file_name>,
+#   and parameter=<flag_or_key_equals_value>. Both type and filename
+#   are required while parameter is optional and can be repeated.
 # @return [Hash]
-#   * :type [String] either "binary" or "text". Default "binary".
-#   * :filename [String] the filename to use for saving the request.
+#   * :type [String] either "binary" or "text". Required; default "binary".
+#   * :filename [String] the filename to use for saving the request. Required.
+#   * :parameters [Array<String>] an array of "key1=value1" or "some-flag" parameter
+#     values. Optional; default [].
 # @raise [ArgumentError] when a required parameter is missing or invalid.
 def extract_params(params)
   opts = {
     type: "binary",
-    filename: ""
+    filename: "",
+    parameters: []
   }
 
   # Process the options passed to the plugin from `protoc`.
   params.split(",").each do |param|
-    key, value = param.split("=")
+    # In the event value contains an =, we want to leave that intact.
+    # Limit the split to just separate the key out.
+    key, value = param.split("=", 2)
     if key == "type"
       valid_type_options = %w[binary text]
       if valid_type_options.include? value
@@ -82,6 +90,8 @@ def extract_params(params)
       end
     elsif key == "filename"
       opts[:filename] = enforce_valid_filename(value)
+    elsif key == "parameter"
+      opts[:parameters] << value
     else
       raise ArgumentError, "Invalid option: #{key}"
     end
@@ -104,6 +114,10 @@ end
 # @param options [Hash]
 # @return [String] an encoded `Google::Protobuf::Compiler::CodeGeneratorResponse` message to pass back to `protoc`
 def generate(request, options)
+  # Overwrite the request fixture parameters with the parameters for the target plugin.
+  modified_request = request.dup
+  modified_request.parameter = options[:parameters]&.join(",") || ""
+
   response = Google::Protobuf::Compiler::CodeGeneratorResponse.new
   response.supported_features = Google::Protobuf::Compiler::CodeGeneratorResponse::Feature::FEATURE_PROTO3_OPTIONAL
 
@@ -116,7 +130,7 @@ def generate(request, options)
     # place this file? For now we just put it in the current directory.
     # A workaround might be to copy the value of `--request_fixture_out=` to a
     # param we can read as `--request_fixture_opt=out=` so we have the output path.
-    File.binwrite(options[:filename], request.to_proto)
+    File.binwrite(options[:filename], modified_request.to_proto)
 
     # Do not add anything to the response; no text files to be written.
 
@@ -125,7 +139,7 @@ def generate(request, options)
     # content of the file the plugin output.
     stdout_str, _stderr_str, _status = Open3.capture3(
       "protoc --decode google.protobuf.compiler.CodeGeneratorRequest ./proto/google/protobuf/compiler/plugin.proto",
-      stdin_data: request.to_proto
+      stdin_data: modified_request.to_proto
     )
 
     file = Google::Protobuf::Compiler::CodeGeneratorResponse::File.new

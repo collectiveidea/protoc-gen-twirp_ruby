@@ -19,6 +19,7 @@ parser = OptionParser.new do |opts|
   opts.on("-o [OUT]", "--out [OUT]", "The output path to place the request file into. Defaults to './spec/fixtures'.")
   opts.on("-f NAME", "--filename NAME", "The filename to use for saving the request.")
   opts.on("-I [PATH1],[PATH2],...", "--proto_path [PATH1],[PATH2],...", "Pass-through proto path(s) to protoc.")
+  opts.on("-p [PARAM1],[PARAM2],...", "--params [PARAM1],[PARAM2],...", "Plugin parameters to save with the request, e.g. `-p key1=value1,some-flag,key2=value2`")
 end
 parser.banner = "Usage: create_fixture [options] example.proto [example2.proto ...]"
 
@@ -38,11 +39,23 @@ fail "Cannot write both binary and text output at the same time. Must specify ei
 
 fail "Missing proto file(s).\n#{parser.help}" if proto_files.empty?
 
-# Convert proto_paths to a series of --proto_path= protoc flags.
-proto_paths = options[:proto_path]
-  &.split(",") # separate the options passed in, which come through as a stringified array
-  &.map { |path| "--proto_path=#{path}" } # convert each option to a "--proto_path=" protoc flag
-  &.join(" ") # combine all of the path flags into a single string separate by spaces to pass to protoc
+# @param values [String] comma-separated string of values to repeat as protoc options
+# @param base_option [String] the name of the protoc command-line option with a trailing =, e.g. "--proto_path="
+# @return [String] the expanded full string of options to pass to protoc
+def expand_to_repeated_protoc_options(values, base_option)
+  return "" if values.nil? || values.empty?
+
+  values
+    .split(",") # separate the options passed in, which come through as a stringified array
+    .map { |value| "#{base_option}#{value}" } # convert each option to a protoc flag
+    .join(" ") # combine all of the path flags into a single string separate by spaces to pass to protoc
+end
+
+# Convert proto_paths to a series of `--proto_path=` protoc flags.
+proto_paths = expand_to_repeated_protoc_options(options[:proto_path], "--proto_path=")
+
+# Convert parameters to a series of `--request_fixture_opt=parameter=` protoc flags.
+request_fixture_opt_parameters = expand_to_repeated_protoc_options(options[:params], "--request_fixture_opt=parameter=")
 
 # Invoke the protoc command, passing the arguments through.
 
@@ -52,6 +65,7 @@ if text
     --request_fixture_out=#{options[:out]} \
     --request_fixture_opt=type=text \
     --request_fixture_opt=filename=#{filename} \
+    #{request_fixture_opt_parameters} \
     #{proto_paths} \
     #{proto_files.join(" ")})
 end
@@ -63,6 +77,7 @@ if binary
     --request_fixture_out=#{options[:out]} \
     --request_fixture_opt=type=binary \
     --request_fixture_opt=filename=#{filename} \
+    #{request_fixture_opt_parameters} \
     #{proto_paths} \
     #{proto_files.join(" ")})
 
