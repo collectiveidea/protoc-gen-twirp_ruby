@@ -4,4 +4,13 @@
 
 require_relative "../lib/twirp/protoc_plugin"
 
-$stdout << Twirp::ProtocPlugin.process($stdin.read)
+begin
+  $stdout << Twirp::ProtocPlugin.process($stdin.read)
+rescue ArgumentError => e
+  # Per the `CodeGeneratorResponse` message documentation in plugin.proto:
+  # Errors which indicate a problem in protoc itself -- such as the input
+  # CodeGeneratorRequest being unparseable -- should be reported by writing a
+  # message to stderr and exiting with a non-zero status code.
+  $stderr << e << "\n"
+  exit 1
+end
