@@ -53,21 +53,7 @@ module Twirp
           # Add newline between service definitions when multiple are generated
           output << "\n" if index > 0
 
-          service_name = service.name
-          service_class_name = service.service_class_name
-
-          # Generate service class
-          output << line("class #{service_class_name} < ::Twirp::Service", indent_level)
-          output << line("  package \"#{@proto_file.package}\"", indent_level) unless @proto_file.package.to_s.empty?
-          output << line("  service \"#{service_name}\"", indent_level)
-          service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
-            input_type = convert_to_ruby_type(method.input_type, current_module)
-            output_type = convert_to_ruby_type(method.output_type, current_module)
-            ruby_method_name = method.name.snake_case
-
-            output << line("  rpc :#{method.name}, #{input_type}, #{output_type}, ruby_method: :#{ruby_method_name}", indent_level)
-          end
-          output << line("end", indent_level)
+          generate_service_class(output, indent_level, service, @proto_file.package, current_module)
 
           # Generate client class
 
@@ -75,7 +61,7 @@ module Twirp
 
           output << "\n"
           output << line("class #{client_class_name} < ::Twirp::Client", indent_level)
-          output << line("  client_for #{service_class_name}", indent_level)
+          output << line("  client_for #{service.service_class_name}", indent_level)
           output << line("end", indent_level)
         end
 
@@ -97,6 +83,33 @@ module Twirp
       # @return [String] the input properly indented with a tailing newline added
       def line(input, indent_level = 0)
         "#{"  " * indent_level}#{input}\n"
+      end
+
+      # Generates a Twirp::Service subclass for the given service class, adding the
+      # string to the output.
+      #
+      # @param output [#<<] the output to append the generated service code to
+      # @param indent_level [Integer] the number of double spaces to indent the generated code by
+      # @param service [Google::Protobuf::ServiceDescriptorProto]
+      # @param package [String, nil] the optional package of the proto file that contains the service, e.g. "example.hello_world"
+      # @param current_module [String, nil] the optional name of the containing module, e.g. "::Example::HelloWorld"
+      # @return [void]
+      def generate_service_class(output, indent_level, service, package, current_module)
+        service_name = service.name
+        service_class_name = service.service_class_name
+
+        # Generate service class
+        output << line("class #{service_class_name} < ::Twirp::Service", indent_level)
+        output << line("  package \"#{package}\"", indent_level) unless package.to_s.empty?
+        output << line("  service \"#{service_name}\"", indent_level)
+        service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
+          input_type = convert_to_ruby_type(method.input_type, current_module)
+          output_type = convert_to_ruby_type(method.output_type, current_module)
+          ruby_method_name = method.name.snake_case
+
+          output << line("  rpc :#{method.name}, #{input_type}, #{output_type}, ruby_method: :#{ruby_method_name}", indent_level)
+        end
+        output << line("end", indent_level)
       end
 
       # Converts either a package string like ".some.example.api" or a namespaced
