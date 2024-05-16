@@ -70,8 +70,7 @@ module Twirp
 
           # Generate client class
 
-          # Strip the "Service" suffix if present for better readability.
-          client_class_name = (service_name.delete_suffix("Service") + "Client").camel_case
+          client_class_name = service.client_class_name
 
           output << "\n"
           output << line("class #{client_class_name} < ::Twirp::Client", indent_level)

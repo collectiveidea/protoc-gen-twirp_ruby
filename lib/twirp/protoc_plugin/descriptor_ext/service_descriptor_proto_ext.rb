@@ -13,4 +13,9 @@ class Google::Protobuf::ServiceDescriptorProto
     end
     service_class_name.camel_case
   end
+
+  def client_class_name
+    # Strip the "Service" suffix if present for better readability.
+    (name.delete_suffix("Service") + "Client").camel_case
+  end
 end
