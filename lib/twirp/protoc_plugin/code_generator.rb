@@ -3,6 +3,7 @@
 require_relative "../../google/protobuf/compiler/plugin_pb"
 require_relative "../../core_ext/string/camel_case"
 require_relative "../../core_ext/string/snake_case"
+require_relative "descriptor_ext/service_descriptor_proto_ext"
 require "stringio"
 
 module Twirp
@@ -52,14 +53,7 @@ module Twirp
           output << "\n" if index > 0
 
           service_name = service.name
-          # The generated service class name should end in "Service"; Only append the
-          # suffix if the service is not already well-named.
-          service_class_name = if service_name.end_with?("Service")
-            service_name
-          else
-            service_name + "Service"
-          end
-          service_class_name = service_class_name.camel_case
+          service_class_name = service.service_class_name
 
           # Generate service class
           output << line("class #{service_class_name} < ::Twirp::Service", indent_level)
