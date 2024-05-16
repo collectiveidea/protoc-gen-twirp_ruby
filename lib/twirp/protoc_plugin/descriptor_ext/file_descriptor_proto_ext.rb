@@ -17,4 +17,10 @@ class Google::Protobuf::FileDescriptorProto
   def relative_ruby_protobuf_name
     File.basename(name, File.extname(name)) + "_pb"
   end
+
+  # @return [Boolean] true if the proto file has at least one `service` definition,
+  #   false otherwise.
+  def has_service?
+    !service.empty?
+  end
 end

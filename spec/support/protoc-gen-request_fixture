@@ -44,7 +44,7 @@ require "open3"
 def main
   request = Google::Protobuf::Compiler::CodeGeneratorRequest.decode($stdin.read)
   begin
-    options = extract_params(request.parameter)
+    options = extract_options(request.parameter)
   rescue ArgumentError => e
     # Per the `CodeGeneratorResponse` message documentation in plugin.proto:
     # Errors which indicate a problem in protoc itself -- such as the input
@@ -69,7 +69,7 @@ end
 #   * :parameters [Array<String>] an array of "key1=value1" or "some-flag" parameter
 #     values. Optional; default [].
 # @raise [ArgumentError] when a required parameter is missing or invalid.
-def extract_params(params)
+def extract_options(params)
   opts = {
     type: "binary",
     filename: "",

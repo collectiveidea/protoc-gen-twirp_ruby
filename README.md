@@ -55,6 +55,7 @@ that might affect migration include:
 
  * Generated output code is in [standardrb style](https://github.com/standardrb/standard).
  * Generated service and client class names are improved for well-named protobuf services. See [#6](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/6).
+ * Supports options: `skip-empty`
 
 ## Usage
 
@@ -63,6 +64,13 @@ Once `protoc` and the `protoc-gen-twirp_ruby` gem is installed, pass `--twirp_ru
 ```bash
 protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. ./path/to/service.proto
 ```
+
+### Options
+
+The plugin supports the following options to configure code generation. Pass options by
+specifying `--twirp_ruby_opt=<option>` on the `protoc` command line.
+
+ * `skip-empty`: Avoid generating a `_twirp.rb` for a `.proto` with no service definitions. 
 
 ## Development
 
