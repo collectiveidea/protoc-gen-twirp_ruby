@@ -42,14 +42,16 @@ module Twirp
       #   array format, e.g. "some-flag,key1=value1".
       #
       #   The only valid parameter is currently the optional "skip-empty" flag.
-      # @return [Hash{Symbol => Boolean}]
+      # @return [Hash{Symbol => Boolean, Symbol}]
       #   * :skip_empty [Boolean] indicating whether generation should skip creating a twirp file
       #       for proto files that contain no services. Default false.
+      #   * :generate [Symbol] one of: :service, :client, or :both. Default :both.
       # @raise [ArgumentError] when a required parameter is missing, a parameter value is invalid, or
       #   an unrecognized parameter is present on the command line
       def extract_options(params)
         opts = {
-          skip_empty: false
+          skip_empty: false,
+          generate: :both
         }
 
         # Process the options passed to the plugin from `protoc`.
@@ -62,6 +64,17 @@ module Twirp
               raise ArgumentError, "Unexpected value passed to skip-empty flag: #{value}"
             end
             opts[:skip_empty] = true
+          elsif key == "generate"
+            if value.nil? || value.empty?
+              raise ArgumentError, "Unexpected missing value for generate option. Please supply one of: service, client, both."
+            end
+
+            value_as_symbol = value&.to_sym
+            unless %i[service client both].include?(value_as_symbol)
+              raise ArgumentError, "The generate value must be one of: service, client, both. Unexpectedly received: #{value}"
+            end
+
+            opts[:generate] = value_as_symbol
           else
             raise ArgumentError, "Invalid option: #{key}"
           end

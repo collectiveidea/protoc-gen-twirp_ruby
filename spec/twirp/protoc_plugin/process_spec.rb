@@ -2,27 +2,53 @@
 
 RSpec.describe Twirp::ProtocPlugin do
   describe "#process" do
-    context "when passing an invalid parameter" do
-      # Generate code gen request fixture:
-      #   `./spec/support/create_fixture -b -p unrecognized -f service_code_gen_request_unrecognized_param_pb.bin ./spec/fixtures/service.proto`
-      let(:request_pb) { fixture("service_code_gen_request_unrecognized_param_pb.bin").read }
+    describe "parameter validation" do
+      context "when passing an invalid parameter" do
+        # Generate code gen request fixture:
+        #   `./spec/support/create_fixture -b -p unrecognized -f service_code_gen_request_unrecognized_param_pb.bin ./spec/fixtures/service.proto`
+        let(:request_pb) { fixture("service_code_gen_request_unrecognized_param_pb.bin").read }
 
-      it "raises an argument error" do
-        expect {
-          Twirp::ProtocPlugin.process(request_pb)
-        }.to raise_error(ArgumentError, "Invalid option: unrecognized")
+        it "raises an argument error" do
+          expect {
+            Twirp::ProtocPlugin.process(request_pb)
+          }.to raise_error(ArgumentError, "Invalid option: unrecognized")
+        end
       end
-    end
 
-    context "when passing an invalid value for the skip-empty flag" do
-      # Generate code gen request fixture:
-      #   `./spec/support/create_fixture -b -p skip-empty=true -f service_code_gen_request_invalid_skip_empty_value_param_pb.bin ./spec/fixtures/service.proto`
-      let(:request_pb) { fixture("service_code_gen_request_invalid_skip_empty_value_param_pb.bin").read }
+      context "when passing an invalid value for the skip-empty flag" do
+        # Generate code gen request fixture:
+        #   `./spec/support/create_fixture -b -p skip-empty=true -f service_code_gen_request_invalid_skip_empty_value_param_pb.bin ./spec/fixtures/service.proto`
+        let(:request_pb) { fixture("service_code_gen_request_invalid_skip_empty_value_param_pb.bin").read }
 
-      it "raises an argument error" do
-        expect {
-          Twirp::ProtocPlugin.process(request_pb)
-        }.to raise_error(ArgumentError, "Unexpected value passed to skip-empty flag: true")
+        it "raises an argument error" do
+          expect {
+            Twirp::ProtocPlugin.process(request_pb)
+          }.to raise_error(ArgumentError, "Unexpected value passed to skip-empty flag: true")
+        end
+      end
+
+      context "when passing an empty value for the generate flag" do
+        # Generate code gen request fixture:
+        #   `./spec/support/create_fixture -b -p generate= -f service_code_gen_request_generate_param_missing_value_pb.bin ./spec/fixtures/service.proto`
+        let(:request_pb) { fixture("service_code_gen_request_generate_param_missing_value_pb.bin").read }
+
+        it "raises an argument error" do
+          expect {
+            Twirp::ProtocPlugin.process(request_pb)
+          }.to raise_error(ArgumentError, "Unexpected missing value for generate option. Please supply one of: service, client, both.")
+        end
+      end
+
+      context "when passing an invalid value for the generate flag" do
+        # Generate code gen request fixture:
+        #   `./spec/support/create_fixture -b -p generate=bad -f service_code_gen_request_generate_param_invalid_value_pb.bin ./spec/fixtures/service.proto`
+        let(:request_pb) { fixture("service_code_gen_request_generate_param_invalid_value_pb.bin").read }
+
+        it "raises an argument error" do
+          expect {
+            Twirp::ProtocPlugin.process(request_pb)
+          }.to raise_error(ArgumentError, "The generate value must be one of: service, client, both. Unexpectedly received: bad")
+        end
       end
     end
 

@@ -5,7 +5,7 @@ RSpec.describe Twirp::ProtocPlugin::CodeGenerator do
   # the `process_spec.rb`. But, in order to get to the private helper methods
   # to test, we have to stand up an instance that we can send messages to.
   let(:proto_file_descriptor) { Google::Protobuf::FileDescriptorProto.new }
-  let(:options) { {skip_empty: false} }
+  let(:options) { {skip_empty: false, generate: :both} }
   let(:code_generator) { Twirp::ProtocPlugin::CodeGenerator.new(proto_file_descriptor, "example_rb.pb", options) }
 
   describe "#split_to_constants" do
