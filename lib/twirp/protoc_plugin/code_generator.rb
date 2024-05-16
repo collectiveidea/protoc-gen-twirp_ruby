@@ -55,14 +55,9 @@ module Twirp
 
           generate_service_class(output, indent_level, service, @proto_file.package, current_module)
 
-          # Generate client class
-
-          client_class_name = service.client_class_name
-
           output << "\n"
-          output << line("class #{client_class_name} < ::Twirp::Client", indent_level)
-          output << line("  client_for #{service.service_class_name}", indent_level)
-          output << line("end", indent_level)
+
+          generate_client_class(output, indent_level, service)
         end
 
         modules.each do |_|
@@ -109,6 +104,19 @@ module Twirp
 
           output << line("  rpc :#{method.name}, #{input_type}, #{output_type}, ruby_method: :#{ruby_method_name}", indent_level)
         end
+        output << line("end", indent_level)
+      end
+
+      # Generates a Twirp::Client subclass for the given service class, adding the
+      # string to the output.
+      #
+      # @param output [#<<] the output to append the generated service code to
+      # @param indent_level [Integer] the number of double spaces to indent the generated code by
+      # @param service [Google::Protobuf::ServiceDescriptorProto]
+      # @return [void]
+      def generate_client_class(output, indent_level, service)
+        output << line("class #{service.client_class_name} < ::Twirp::Client", indent_level)
+        output << line("  client_for #{service.service_class_name}", indent_level)
         output << line("end", indent_level)
       end
 
