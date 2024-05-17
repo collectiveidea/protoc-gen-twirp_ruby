@@ -2,6 +2,7 @@
 
 require "rspec/file_fixtures"
 require "twirp/protoc_plugin"
+require "support/matchers/be_empty_scaffolding_matcher"
 
 RSpec.configure do |config|
   # Enable flags like --only-failures and --next-failure
