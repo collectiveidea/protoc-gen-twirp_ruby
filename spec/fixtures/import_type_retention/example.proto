@@ -1,5 +1,0 @@
-package package.rpc.asks;
-import "package/actions/asks.proto";
-service Ask {
-  rpc GetAskSnapshot(package.actions.asks.RequestAskSnapshot) returns (package.actions.asks.AskSnapshot) { }
-}

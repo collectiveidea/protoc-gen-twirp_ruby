@@ -1,0 +1,49 @@
+syntax = "proto3";
+
+// This is a contrived example that demonstrates:
+//
+// 1. Code generation for multiple services, each with multiple rpcs
+// 2. Using imported types for request and response types
+// 3. Services proto in a completely different package
+//
+// This file does _not_ demonstrate best practices.
+
+package api;
+
+import "common/rpc/status.proto";
+import "common/type/color.proto";
+import "common/type/time_of_day.proto";
+
+service GreetService {
+  rpc SayHello(HelloRequest) returns (HelloResponse);
+  rpc SayGoodbye(GoodbyeRequest) returns (GoodbyeResponse);
+  rpc ChangeColor(.common.type.Color) returns (ChangeColorResponse);
+}
+
+service StatusService {
+  rpc GetStatus(StatusRequest) returns (.common.rpc.Status);
+  rpc GetTimeOfDay(TimeOfDayRequest) returns (common.type.TimeOfDay);
+}
+
+message HelloRequest {
+  string name = 1;
+}
+
+message HelloResponse {
+  string response = 1;
+  .common.type.Color favorite_color = 2;
+}
+
+message GoodbyeRequest {
+  string name = 1;
+}
+
+message GoodbyeResponse {
+  string response = 1;
+}
+
+message ChangeColorResponse {}
+
+message StatusRequest {}
+
+message TimeOfDayRequest {}
