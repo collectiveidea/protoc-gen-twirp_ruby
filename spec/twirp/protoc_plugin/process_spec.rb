@@ -2,27 +2,53 @@
 
 RSpec.describe Twirp::ProtocPlugin do
   describe "#process" do
-    context "when passing an invalid parameter" do
-      # Generate code gen request fixture:
-      #   `./spec/support/create_fixture -b -p unrecognized -f service_code_gen_request_unrecognized_param_pb.bin ./spec/fixtures/service.proto`
-      let(:request_pb) { fixture("service_code_gen_request_unrecognized_param_pb.bin").read }
+    describe "parameter validation" do
+      context "when passing an invalid parameter" do
+        # Generate code gen request fixture:
+        #   `./spec/support/create_fixture -b -p unrecognized -f service_code_gen_request_unrecognized_param_pb.bin ./spec/fixtures/service.proto`
+        let(:request_pb) { fixture("service_code_gen_request_unrecognized_param_pb.bin").read }
 
-      it "raises an argument error" do
-        expect {
-          Twirp::ProtocPlugin.process(request_pb)
-        }.to raise_error(ArgumentError, "Invalid option: unrecognized")
+        it "raises an argument error" do
+          expect {
+            Twirp::ProtocPlugin.process(request_pb)
+          }.to raise_error(ArgumentError, "Invalid option: unrecognized")
+        end
       end
-    end
 
-    context "when passing an invalid value for the skip-empty flag" do
-      # Generate code gen request fixture:
-      #   `./spec/support/create_fixture -b -p skip-empty=true -f service_code_gen_request_invalid_skip_empty_value_param_pb.bin ./spec/fixtures/service.proto`
-      let(:request_pb) { fixture("service_code_gen_request_invalid_skip_empty_value_param_pb.bin").read }
+      context "when passing an invalid value for the skip-empty flag" do
+        # Generate code gen request fixture:
+        #   `./spec/support/create_fixture -b -p skip-empty=true -f service_code_gen_request_invalid_skip_empty_value_param_pb.bin ./spec/fixtures/service.proto`
+        let(:request_pb) { fixture("service_code_gen_request_invalid_skip_empty_value_param_pb.bin").read }
 
-      it "raises an argument error" do
-        expect {
-          Twirp::ProtocPlugin.process(request_pb)
-        }.to raise_error(ArgumentError, "Unexpected value passed to skip-empty flag: true")
+        it "raises an argument error" do
+          expect {
+            Twirp::ProtocPlugin.process(request_pb)
+          }.to raise_error(ArgumentError, "Unexpected value passed to skip-empty flag: true")
+        end
+      end
+
+      context "when passing an empty value for the generate flag" do
+        # Generate code gen request fixture:
+        #   `./spec/support/create_fixture -b -p generate= -f service_code_gen_request_generate_param_missing_value_pb.bin ./spec/fixtures/service.proto`
+        let(:request_pb) { fixture("service_code_gen_request_generate_param_missing_value_pb.bin").read }
+
+        it "raises an argument error" do
+          expect {
+            Twirp::ProtocPlugin.process(request_pb)
+          }.to raise_error(ArgumentError, "Unexpected missing value for generate option. Please supply one of: service, client, both.")
+        end
+      end
+
+      context "when passing an invalid value for the generate flag" do
+        # Generate code gen request fixture:
+        #   `./spec/support/create_fixture -b -p generate=bad -f service_code_gen_request_generate_param_invalid_value_pb.bin ./spec/fixtures/service.proto`
+        let(:request_pb) { fixture("service_code_gen_request_generate_param_invalid_value_pb.bin").read }
+
+        it "raises an argument error" do
+          expect {
+            Twirp::ProtocPlugin.process(request_pb)
+          }.to raise_error(ArgumentError, "The generate value must be one of: service, client, both. Unexpectedly received: bad")
+        end
       end
     end
 
@@ -110,105 +136,294 @@ RSpec.describe Twirp::ProtocPlugin do
       end
     end
 
-    context "when using a file that imports types from another file" do
-      context "when omitting the `skip-empty` option" do
-        # Generate code gen request fixture:
-        #   `./spec/support/create_fixture -b -f example_code_gen_request_pb.bin -o ./spec/fixtures/import_type_retention -I ./spec/fixtures/import_type_retention example.proto package/actions/asks.proto`
-        let(:example_code_gen_request_pb) { fixture("import_type_retention/example_code_gen_request_pb.bin").read }
+    context "when using a complex example with imported types and multiple services" do
+      # Generate code gen request fixture:
+      #   `./spec/support/create_fixture -b -f api_code_gen_request_pb.bin -o ./spec/fixtures/complex_example -I ./spec/fixtures/complex_example api.proto common/rpc/status.proto common/type/color.proto common/type/time_of_day.proto`
+      let(:api_code_gen_request_pb) { fixture("complex_example/api_code_gen_request_pb.bin").read }
 
+      context "when omitting the `skip-empty` option" do
         it "generates expected output" do
-          response_pb = Twirp::ProtocPlugin.process(example_code_gen_request_pb)
+          response_pb = Twirp::ProtocPlugin.process(api_code_gen_request_pb)
           response = Google::Protobuf::Compiler::CodeGeneratorResponse.decode(response_pb)
 
           expect(response.supported_features).to eq(Google::Protobuf::Compiler::CodeGeneratorResponse::Feature::FEATURE_PROTO3_OPTIONAL)
-          expect(response.file.size).to eq(2)
+          expect(response.file.size).to eq(4)
 
           first_file = response.file[0]
-          expect(first_file.name).to eq("package/actions/asks_twirp.rb")
+          expect(first_file.name).to eq("common/rpc/status_twirp.rb")
           expect(first_file.content).to eq <<~EOF
             # frozen_string_literal: true
 
             # Generated by the protoc-gen-twirp_ruby gem v#{Twirp::ProtocPlugin::VERSION}. DO NOT EDIT!
-            # source: package/actions/asks.proto
+            # source: common/rpc/status.proto
 
             require "twirp"
-            require_relative "asks_pb"
+            require_relative "status_pb"
 
-            module Package
-              module Actions
-                module Asks
-                  # No services found; To skip generating this file, specify `--twirp_ruby_opt=skip-empty`.
-                end
+            module Common
+              module Rpc
+                # No services found; To skip generating this file, specify `--twirp_ruby_opt=skip-empty`.
               end
             end
           EOF
 
           second_file = response.file[1]
-          expect(second_file.name).to eq("example_twirp.rb")
+          expect(second_file.name).to eq("common/type/color_twirp.rb")
           expect(second_file.content).to eq <<~EOF
             # frozen_string_literal: true
 
             # Generated by the protoc-gen-twirp_ruby gem v#{Twirp::ProtocPlugin::VERSION}. DO NOT EDIT!
-            # source: example.proto
+            # source: common/type/color.proto
 
             require "twirp"
-            require_relative "example_pb"
+            require_relative "color_pb"
 
-            module Package
-              module Rpc
-                module Asks
-                  class AskService < ::Twirp::Service
-                    package "package.rpc.asks"
-                    service "Ask"
-                    rpc :GetAskSnapshot, ::Package::Actions::Asks::RequestAskSnapshot, ::Package::Actions::Asks::AskSnapshot, ruby_method: :get_ask_snapshot
-                  end
+            module Common
+              module Type
+                # No services found; To skip generating this file, specify `--twirp_ruby_opt=skip-empty`.
+              end
+            end
+          EOF
 
-                  class AskClient < ::Twirp::Client
-                    client_for AskService
-                  end
-                end
+          third_file = response.file[2]
+          expect(third_file.name).to eq("common/type/time_of_day_twirp.rb")
+          expect(third_file.content).to eq <<~EOF
+            # frozen_string_literal: true
+
+            # Generated by the protoc-gen-twirp_ruby gem v#{Twirp::ProtocPlugin::VERSION}. DO NOT EDIT!
+            # source: common/type/time_of_day.proto
+
+            require "twirp"
+            require_relative "time_of_day_pb"
+
+            module Common
+              module Type
+                # No services found; To skip generating this file, specify `--twirp_ruby_opt=skip-empty`.
+              end
+            end
+          EOF
+
+          fourth_file = response.file[3]
+          expect(fourth_file.name).to eq("api_twirp.rb")
+          expect(fourth_file.content).to eq <<~EOF
+            # frozen_string_literal: true
+
+            # Generated by the protoc-gen-twirp_ruby gem v#{Twirp::ProtocPlugin::VERSION}. DO NOT EDIT!
+            # source: api.proto
+
+            require "twirp"
+            require_relative "api_pb"
+
+            module Api
+              class GreetService < ::Twirp::Service
+                package "api"
+                service "GreetService"
+                rpc :SayHello, HelloRequest, HelloResponse, ruby_method: :say_hello
+                rpc :SayGoodbye, GoodbyeRequest, GoodbyeResponse, ruby_method: :say_goodbye
+                rpc :ChangeColor, ::Common::Type::Color, ChangeColorResponse, ruby_method: :change_color
+              end
+            
+              class GreetClient < ::Twirp::Client
+                client_for GreetService
+              end
+
+              class StatusService < ::Twirp::Service
+                package "api"
+                service "StatusService"
+                rpc :GetStatus, StatusRequest, ::Common::Rpc::Status, ruby_method: :get_status
+                rpc :GetTimeOfDay, TimeOfDayRequest, ::Common::Type::TimeOfDay, ruby_method: :get_time_of_day
+              end
+            
+              class StatusClient < ::Twirp::Client
+                client_for StatusService
               end
             end
           EOF
         end
       end
 
-      context "when specifying the `skip-empty` option`" do
+      context "when specifying the `skip-empty` option" do
         # Generate code gen request fixture:
-        #   `./spec/support/create_fixture -b -f example_code_gen_request_skip_empty_pb.bin -p skip-empty -o ./spec/fixtures/import_type_retention -I ./spec/fixtures/import_type_retention example.proto package/actions/asks.proto`
-        let(:example_code_gen_request_skip_empty_pb) { fixture("import_type_retention/example_code_gen_request_skip_empty_pb.bin").read }
+        #   `./spec/support/create_fixture -b -f api_code_gen_request_skip_empty_pb.bin -p skip-empty -o ./spec/fixtures/complex_example -I ./spec/fixtures/complex_example api.proto common/rpc/status.proto common/type/color.proto common/type/time_of_day.proto`
+        let(:api_code_gen_request_skip_empty_pb) { fixture("complex_example/api_code_gen_request_skip_empty_pb.bin").read }
 
-        it "generates expected output" do
-          response_pb = Twirp::ProtocPlugin.process(example_code_gen_request_skip_empty_pb)
+        it "generates a single file containing two services and two clients" do
+          response_pb = Twirp::ProtocPlugin.process(api_code_gen_request_skip_empty_pb)
           response = Google::Protobuf::Compiler::CodeGeneratorResponse.decode(response_pb)
 
           expect(response.supported_features).to eq(Google::Protobuf::Compiler::CodeGeneratorResponse::Feature::FEATURE_PROTO3_OPTIONAL)
           expect(response.file.size).to eq(1)
 
           first_file = response.file[0]
-          expect(first_file.name).to eq("example_twirp.rb")
+          expect(first_file.name).to eq("api_twirp.rb")
           expect(first_file.content).to eq <<~EOF
             # frozen_string_literal: true
-
+  
             # Generated by the protoc-gen-twirp_ruby gem v#{Twirp::ProtocPlugin::VERSION}. DO NOT EDIT!
-            # source: example.proto
-
+            # source: api.proto
+  
             require "twirp"
-            require_relative "example_pb"
+            require_relative "api_pb"
+  
+            module Api
+              class GreetService < ::Twirp::Service
+                package "api"
+                service "GreetService"
+                rpc :SayHello, HelloRequest, HelloResponse, ruby_method: :say_hello
+                rpc :SayGoodbye, GoodbyeRequest, GoodbyeResponse, ruby_method: :say_goodbye
+                rpc :ChangeColor, ::Common::Type::Color, ChangeColorResponse, ruby_method: :change_color
+              end
+            
+              class GreetClient < ::Twirp::Client
+                client_for GreetService
+              end
+  
+              class StatusService < ::Twirp::Service
+                package "api"
+                service "StatusService"
+                rpc :GetStatus, StatusRequest, ::Common::Rpc::Status, ruby_method: :get_status
+                rpc :GetTimeOfDay, TimeOfDayRequest, ::Common::Type::TimeOfDay, ruby_method: :get_time_of_day
+              end
+            
+              class StatusClient < ::Twirp::Client
+                client_for StatusService
+              end
+            end
+          EOF
+        end
+      end
 
-            module Package
-              module Rpc
-                module Asks
-                  class AskService < ::Twirp::Service
-                    package "package.rpc.asks"
-                    service "Ask"
-                    rpc :GetAskSnapshot, ::Package::Actions::Asks::RequestAskSnapshot, ::Package::Actions::Asks::AskSnapshot, ruby_method: :get_ask_snapshot
-                  end
+      context "when specifying the `skip-empty` and `generate=both` options" do
+        # Generate code gen request fixture:
+        #   `./spec/support/create_fixture -b -f api_code_gen_request_skip_empty_generate_both_pb.bin -p skip-empty,generate=both -o ./spec/fixtures/complex_example -I ./spec/fixtures/complex_example api.proto common/rpc/status.proto common/type/color.proto common/type/time_of_day.proto`
+        let(:api_code_gen_request_skip_empty_generate_both_pb) { fixture("complex_example/api_code_gen_request_skip_empty_generate_both_pb.bin").read }
 
-                  class AskClient < ::Twirp::Client
-                    client_for AskService
-                  end
-                end
+        it "generates a single file containing two services and two clients" do
+          response_pb = Twirp::ProtocPlugin.process(api_code_gen_request_skip_empty_generate_both_pb)
+          response = Google::Protobuf::Compiler::CodeGeneratorResponse.decode(response_pb)
+
+          expect(response.supported_features).to eq(Google::Protobuf::Compiler::CodeGeneratorResponse::Feature::FEATURE_PROTO3_OPTIONAL)
+          expect(response.file.size).to eq(1)
+
+          first_file = response.file[0]
+          expect(first_file.name).to eq("api_twirp.rb")
+          expect(first_file.content).to eq <<~EOF
+            # frozen_string_literal: true
+  
+            # Generated by the protoc-gen-twirp_ruby gem v#{Twirp::ProtocPlugin::VERSION}. DO NOT EDIT!
+            # source: api.proto
+  
+            require "twirp"
+            require_relative "api_pb"
+  
+            module Api
+              class GreetService < ::Twirp::Service
+                package "api"
+                service "GreetService"
+                rpc :SayHello, HelloRequest, HelloResponse, ruby_method: :say_hello
+                rpc :SayGoodbye, GoodbyeRequest, GoodbyeResponse, ruby_method: :say_goodbye
+                rpc :ChangeColor, ::Common::Type::Color, ChangeColorResponse, ruby_method: :change_color
+              end
+            
+              class GreetClient < ::Twirp::Client
+                client_for GreetService
+              end
+  
+              class StatusService < ::Twirp::Service
+                package "api"
+                service "StatusService"
+                rpc :GetStatus, StatusRequest, ::Common::Rpc::Status, ruby_method: :get_status
+                rpc :GetTimeOfDay, TimeOfDayRequest, ::Common::Type::TimeOfDay, ruby_method: :get_time_of_day
+              end
+            
+              class StatusClient < ::Twirp::Client
+                client_for StatusService
+              end
+            end
+          EOF
+        end
+      end
+
+      context "when specifying the `skip-empty` and `generate=service` options" do
+        # Generate code gen request fixture:
+        #   `./spec/support/create_fixture -b -f api_code_gen_request_skip_empty_generate_service_pb.bin -p skip-empty,generate=service -o ./spec/fixtures/complex_example -I ./spec/fixtures/complex_example api.proto common/rpc/status.proto common/type/color.proto common/type/time_of_day.proto`
+        let(:api_code_gen_request_skip_empty_generate_service_pb) { fixture("complex_example/api_code_gen_request_skip_empty_generate_service_pb.bin").read }
+
+        it "generates a single file with only two services" do
+          response_pb = Twirp::ProtocPlugin.process(api_code_gen_request_skip_empty_generate_service_pb)
+          response = Google::Protobuf::Compiler::CodeGeneratorResponse.decode(response_pb)
+
+          expect(response.supported_features).to eq(Google::Protobuf::Compiler::CodeGeneratorResponse::Feature::FEATURE_PROTO3_OPTIONAL)
+          expect(response.file.size).to eq(1)
+
+          first_file = response.file[0]
+          expect(first_file.name).to eq("api_twirp.rb")
+          expect(first_file.content).to eq <<~EOF
+            # frozen_string_literal: true
+  
+            # Generated by the protoc-gen-twirp_ruby gem v#{Twirp::ProtocPlugin::VERSION}. DO NOT EDIT!
+            # source: api.proto
+  
+            require "twirp"
+            require_relative "api_pb"
+  
+            module Api
+              class GreetService < ::Twirp::Service
+                package "api"
+                service "GreetService"
+                rpc :SayHello, HelloRequest, HelloResponse, ruby_method: :say_hello
+                rpc :SayGoodbye, GoodbyeRequest, GoodbyeResponse, ruby_method: :say_goodbye
+                rpc :ChangeColor, ::Common::Type::Color, ChangeColorResponse, ruby_method: :change_color
+              end
+  
+              class StatusService < ::Twirp::Service
+                package "api"
+                service "StatusService"
+                rpc :GetStatus, StatusRequest, ::Common::Rpc::Status, ruby_method: :get_status
+                rpc :GetTimeOfDay, TimeOfDayRequest, ::Common::Type::TimeOfDay, ruby_method: :get_time_of_day
+              end
+            end
+          EOF
+        end
+      end
+
+      context "when specifying the `skip-empty` and `generate=client` options" do
+        # Generate code gen request fixture:
+        #   `./spec/support/create_fixture -b -f api_code_gen_request_skip_empty_generate_client_pb.bin -p skip-empty,generate=client -o ./spec/fixtures/complex_example -I ./spec/fixtures/complex_example api.proto common/rpc/status.proto common/type/color.proto common/type/time_of_day.proto`
+        let(:api_code_gen_request_skip_empty_generate_client_pb) { fixture("complex_example/api_code_gen_request_skip_empty_generate_client_pb.bin").read }
+
+        it "generates a single file with only two clients without the `client_for` DSL" do
+          response_pb = Twirp::ProtocPlugin.process(api_code_gen_request_skip_empty_generate_client_pb)
+          response = Google::Protobuf::Compiler::CodeGeneratorResponse.decode(response_pb)
+
+          expect(response.supported_features).to eq(Google::Protobuf::Compiler::CodeGeneratorResponse::Feature::FEATURE_PROTO3_OPTIONAL)
+          expect(response.file.size).to eq(1)
+
+          first_file = response.file[0]
+          expect(first_file.name).to eq("api_twirp.rb")
+          expect(first_file.content).to eq <<~EOF
+            # frozen_string_literal: true
+  
+            # Generated by the protoc-gen-twirp_ruby gem v#{Twirp::ProtocPlugin::VERSION}. DO NOT EDIT!
+            # source: api.proto
+  
+            require "twirp"
+            require_relative "api_pb"
+  
+            module Api
+              class GreetClient < ::Twirp::Client
+                package "api"
+                service "GreetService"
+                rpc "SayHello", HelloRequest, HelloResponse, ruby_method: :say_hello
+                rpc "SayGoodbye", GoodbyeRequest, GoodbyeResponse, ruby_method: :say_goodbye
+                rpc "ChangeColor", ::Common::Type::Color, ChangeColorResponse, ruby_method: :change_color
+              end
+  
+              class StatusClient < ::Twirp::Client
+                package "api"
+                service "StatusService"
+                rpc "GetStatus", StatusRequest, ::Common::Rpc::Status, ruby_method: :get_status
+                rpc "GetTimeOfDay", TimeOfDayRequest, ::Common::Type::TimeOfDay, ruby_method: :get_time_of_day
               end
             end
           EOF

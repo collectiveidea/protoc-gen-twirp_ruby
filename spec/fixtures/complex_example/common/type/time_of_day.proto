@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package common.type;
+
+message TimeOfDay {
+  enum Meridiem {
+    UNKNOWN = 0;
+    ANTE = 1;
+    POST = 2;
+  }
+
+  Meridiem am_or_pm = 1;
+}
