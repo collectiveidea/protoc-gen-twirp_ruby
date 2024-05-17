@@ -4,6 +4,8 @@ package common.rpc;
 
 import "google/protobuf/any.proto";
 
+option ruby_package = "Common::RPC";
+
 message Status {
   int32 code = 1;
   string message = 2;
