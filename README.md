@@ -55,7 +55,7 @@ that might affect migration include:
 
  * Generated output code is in [standardrb style](https://github.com/standardrb/standard).
  * Generated service and client class names are improved for well-named protobuf services. See [#6](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/6).
- * Supports options: `skip-empty`
+ * Supports various protoc command line [configuration options](https://github.com/collectiveidea/protoc-gen-twirp_ruby?tab=readme-ov-file#options).
 
 ## Usage
 
@@ -70,7 +70,13 @@ protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. ./path/to/service.proto
 The plugin supports the following options to configure code generation. Pass options by
 specifying `--twirp_ruby_opt=<option>` on the `protoc` command line.
 
- * `skip-empty`: Avoid generating a `_twirp.rb` for a `.proto` with no service definitions. 
+ * `skip-empty`: Avoid generating a `_twirp.rb` for a `.proto` with no service definitions. By default, a `_twirp.rb`
+   file is generated for every proto file listed on the command line, even if the file is empty scaffolding. 
+ * `generate=<service|client|both>`: Customize generated output to include generated services, clients, or both.
+   * `generate=service` - only generate `::Twirp::Service` subclass(es).
+   * `generate=client` - only generate `::Twirp::Client` subclass(es).
+   * `generate=both` - generate both services and clients. This is the default option to preserve
+     backwards compatibility.
 
 ## Development
 
