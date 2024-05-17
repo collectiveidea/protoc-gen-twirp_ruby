@@ -50,14 +50,22 @@ module Twirp
         end
 
         @proto_file.service.each_with_index do |service, index| # service: <Google::Protobuf::ServiceDescriptorProto>
-          # Add newline between service definitions when multiple are generated
+          # Add newline between definitions when multiple are generated
           output << "\n" if index > 0
 
-          generate_service_class(output, indent_level, service, @proto_file.package, current_module)
+          if %i[service both].include?(@options[:generate])
+            generate_service_class(output, indent_level, service, @proto_file.package, current_module)
+          end
 
-          output << "\n"
+          if @options[:generate] == :both
+            # Space between generated service and client when generating both
+            output << "\n"
 
-          generate_client_class(output, indent_level, service)
+            generate_client_class_for_service(output, indent_level, service)
+          elsif @options[:generate] == :client
+            # When generating only the client, we can't use the `client_for` DSL.
+            generate_client_class_standalone(output, indent_level, service, @proto_file.package, current_module)
+          end
         end
 
         modules.each do |_|
@@ -114,9 +122,36 @@ module Twirp
       # @param indent_level [Integer] the number of double spaces to indent the generated code by
       # @param service [Google::Protobuf::ServiceDescriptorProto]
       # @return [void]
-      def generate_client_class(output, indent_level, service)
+      def generate_client_class_for_service(output, indent_level, service)
         output << line("class #{service.client_class_name} < ::Twirp::Client", indent_level)
         output << line("  client_for #{service.service_class_name}", indent_level)
+        output << line("end", indent_level)
+      end
+
+      # Generates a Twirp::Client subclass standalone, without using the `client_for` DSL because
+      # there is no corresponding service to reference.
+      #
+      # This essentially in-lines the `client_for` logic from
+      # https://github.com/arthurnn/twirp-ruby/blob/v1.11.0/lib/twirp/client.rb#L31
+      #
+      # @param output [#<<] the output to append the generated service code to
+      # @param indent_level [Integer] the number of double spaces to indent the generated code by
+      # @param service [Google::Protobuf::ServiceDescriptorProto]
+      # @param package [String, nil] the optional package of the proto file that contains the service, e.g. "example.hello_world"
+      # @param current_module [String, nil] the optional name of the containing module, e.g. "::Example::HelloWorld"
+      # @return [void]
+      def generate_client_class_standalone(output, indent_level, service, package, current_module)
+        output << line("class #{service.client_class_name} < ::Twirp::Client", indent_level)
+        output << line("  package \"#{package}\"", indent_level) unless package.to_s.empty?
+        output << line("  service \"#{service.name}\"", indent_level)
+        service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
+          input_type = convert_to_ruby_type(method.input_type, current_module)
+          output_type = convert_to_ruby_type(method.output_type, current_module)
+          ruby_method_name = method.name.snake_case
+
+          # TRICKY: The service `rpc` DSL accepts a method symbol, but the client `rpc` DSL expects a string.
+          output << line("  rpc \"#{method.name}\", #{input_type}, #{output_type}, ruby_method: :#{ruby_method_name}", indent_level)
+        end
         output << line("end", indent_level)
       end
 
