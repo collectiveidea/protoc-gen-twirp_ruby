@@ -36,14 +36,12 @@ module Twirp
         START
 
         indent_level = 0
-        modules = split_to_constants(@proto_file.package)
+        modules = @proto_file.ruby_module&.delete_prefix("::")&.split("::") || []
 
         modules.each do |mod|
           output << line("module #{mod}", indent_level)
           indent_level += 1
         end
-
-        current_module = "::" + modules.join("::")
 
         unless @proto_file.has_service?
           output << line("# No services found; To skip generating this file, specify `--twirp_ruby_opt=skip-empty`.", indent_level)
@@ -54,7 +52,7 @@ module Twirp
           output << "\n" if index > 0
 
           if %i[service both].include?(@options[:generate])
-            generate_service_class(output, indent_level, service, @proto_file.package, current_module)
+            generate_service_class(output, indent_level, service, @proto_file.package, @proto_file.ruby_module)
           end
 
           if @options[:generate] == :both
@@ -64,7 +62,7 @@ module Twirp
             generate_client_class_for_service(output, indent_level, service)
           elsif @options[:generate] == :client
             # When generating only the client, we can't use the `client_for` DSL.
-            generate_client_class_standalone(output, indent_level, service, @proto_file.package, current_module)
+            generate_client_class_standalone(output, indent_level, service, @proto_file.package, @proto_file.ruby_module)
           end
         end
 

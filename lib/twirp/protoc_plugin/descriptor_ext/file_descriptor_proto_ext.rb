@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "../../../core_ext/string/camel_case"
+
 class Google::Protobuf::FileDescriptorProto
   # @return [String] the output filename for the proto file's generated twirp code.
   #   For example, given a `name` of e.g. "some/example/hello.proto", the twirp output
@@ -22,5 +24,15 @@ class Google::Protobuf::FileDescriptorProto
   #   false otherwise.
   def has_service?
     !service.empty?
+  end
+
+  # @return [String] the ruby module for this proto file. This is the `package` of
+  #   the file (converted to UpperCamelCase), with a leading top-level namespace
+  #   qualifier "::", e.g.: "::MyCompany::Example::Api". Returns `nil` when no
+  #   package is specified.
+  def ruby_module
+    return nil if package.to_s.empty?
+
+    @ruby_module ||= "::" + package.split(".").map { |s| s.camel_case }.join("::")
   end
 end

@@ -47,4 +47,16 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
       expect(proto_file.has_service?).to eq(true)
     end
   end
+
+  describe "#ruby_module" do
+    it "returns nil when no package is present" do
+      proto_file = Google::Protobuf::FileDescriptorProto.new(name: "hello.proto")
+      expect(proto_file.ruby_module).to be_nil
+    end
+
+    it "returns the converted package name when present" do
+      proto_file = Google::Protobuf::FileDescriptorProto.new(name: "hello.proto", package: "my_company.example.api")
+      expect(proto_file.ruby_module).to eq("::MyCompany::Example::Api")
+    end
+  end
 end
