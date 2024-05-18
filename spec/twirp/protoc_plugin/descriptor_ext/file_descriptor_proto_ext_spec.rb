@@ -49,14 +49,53 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
   end
 
   describe "#ruby_module" do
-    it "returns nil when no package is present" do
+    it "returns an empty string when no package is present" do
       proto_file = Google::Protobuf::FileDescriptorProto.new(name: "hello.proto")
-      expect(proto_file.ruby_module).to be_nil
+      expect(proto_file.ruby_module).to eq("")
     end
 
     it "returns the converted package name when present" do
       proto_file = Google::Protobuf::FileDescriptorProto.new(name: "hello.proto", package: "my_company.example.api")
       expect(proto_file.ruby_module).to eq("::MyCompany::Example::Api")
+    end
+
+    it "returns the ruby_package when both ruby_package option and package present" do
+      proto_file = Google::Protobuf::FileDescriptorProto.new(
+        name: "hello.proto",
+        package: "my_company.example.api",
+        options: Google::Protobuf::FileOptions.new(ruby_package: "My::API")
+      )
+
+      expect(proto_file.ruby_module).to eq("::My::API")
+    end
+
+    it "returns the ruby_package when no package present" do
+      proto_file = Google::Protobuf::FileDescriptorProto.new(
+        name: "hello.proto",
+        options: Google::Protobuf::FileOptions.new(ruby_package: "My::API")
+      )
+
+      expect(proto_file.ruby_module).to eq("::My::API")
+    end
+
+    it "returns the converted package when ruby_package is specified but empty" do
+      proto_file = Google::Protobuf::FileDescriptorProto.new(
+        name: "hello.proto",
+        package: "is.specified",
+        options: Google::Protobuf::FileOptions.new(ruby_package: "")
+      )
+
+      expect(proto_file.ruby_module).to eq("::Is::Specified")
+    end
+
+    it "returns an empty string when both ruby_package and package are empty" do
+      proto_file = Google::Protobuf::FileDescriptorProto.new(
+        name: "hello.proto",
+        package: "",
+        options: Google::Protobuf::FileOptions.new(ruby_package: "")
+      )
+
+      expect(proto_file.ruby_module).to eq("")
     end
   end
 

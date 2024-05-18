@@ -35,7 +35,7 @@ module Twirp
         START
 
         indent_level = 0
-        modules = @proto_file.ruby_module&.delete_prefix("::")&.split("::") || []
+        modules = @proto_file.ruby_module.delete_prefix("::").split("::")
 
         modules.each do |mod|
           output << line("module #{mod}", indent_level)

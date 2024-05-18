@@ -27,14 +27,22 @@ class Google::Protobuf::FileDescriptorProto
     !service.empty?
   end
 
-  # @return [String] the ruby module for this proto file. This is the `package` of
-  #   the file (converted to UpperCamelCase), with a leading top-level namespace
-  #   qualifier "::", e.g.: "::MyCompany::Example::Api". Returns `nil` when no
-  #   package is specified.
+  # @return [String] the ruby module for this proto file. Gives precedence to
+  #   the `ruby_package` option if specified, then the `package` of the file
+  #   (converted to UpperCamelCase). Includes a leading top-level namespace
+  #   qualifier "::", e.g.: "::MyCompany::Example::Api". Returns `""` when neither
+  #   ruby_package nor package is specified.
   def ruby_module
-    return nil if package.to_s.empty?
+    @ruby_module ||= begin
+      pkg = options.ruby_package unless options&.ruby_package.to_s.empty?
+      pkg ||= split_to_constants(package).join("::").to_s unless package.to_s.empty?
 
-    @ruby_module ||= "::" + split_to_constants(package).join("::")
+      if pkg.nil?
+        "" # Set to "" instead of nil to properly memoize and avoid re-calculating
+      else
+        "::" + pkg
+      end
+    end
   end
 
   # Converts a protobuf message type to a string containing
@@ -49,12 +57,12 @@ class Google::Protobuf::FileDescriptorProto
   #   convert_to_ruby_type("google.protobuf.Empty", "::Foo") => "Google::Protobuf::Empty"
   #
   # @param message_type [String]
-  # @param current_module [String, nil]
+  # @param current_module [String] optional current ruby module
   # @return [String]
-  def convert_to_ruby_type(message_type, current_module = nil)
+  def convert_to_ruby_type(message_type, current_module = "")
     s = split_to_constants(message_type).join("::")
 
-    if !current_module.nil? && s.start_with?(current_module)
+    if !current_module.empty? && s.start_with?(current_module)
       # Strip current module and trailing "::" prefix
       s[current_module.size + 2..]
     else
