@@ -151,7 +151,7 @@ RSpec.describe Twirp::ProtocPlugin do
 
           first_file = response.file[0]
           expect(first_file.name).to eq("common/rpc/status_twirp.rb")
-          expect(first_file.content).to be_empty_scaffolding("common/rpc/status.proto", "status_pb", %w[Common Rpc])
+          expect(first_file.content).to be_empty_scaffolding("common/rpc/status.proto", "status_pb", %w[Common RPC])
 
           second_file = response.file[1]
           expect(second_file.name).to eq("common/type/color_twirp.rb")
@@ -172,7 +172,7 @@ RSpec.describe Twirp::ProtocPlugin do
             require "twirp"
             require_relative "api_pb"
 
-            module Api
+            module API
               class GreetService < ::Twirp::Service
                 package "api"
                 service "GreetService"
@@ -188,7 +188,7 @@ RSpec.describe Twirp::ProtocPlugin do
               class StatusService < ::Twirp::Service
                 package "api"
                 service "StatusService"
-                rpc :GetStatus, StatusRequest, ::Common::Rpc::Status, ruby_method: :get_status
+                rpc :GetStatus, ::Google::Protobuf::Empty, ::Common::RPC::Status, ruby_method: :get_status
                 rpc :GetTimeOfDay, TimeOfDayRequest, ::Common::Type::TimeOfDay, ruby_method: :get_time_of_day
               end
             
@@ -223,7 +223,7 @@ RSpec.describe Twirp::ProtocPlugin do
             require "twirp"
             require_relative "api_pb"
   
-            module Api
+            module API
               class GreetService < ::Twirp::Service
                 package "api"
                 service "GreetService"
@@ -239,7 +239,7 @@ RSpec.describe Twirp::ProtocPlugin do
               class StatusService < ::Twirp::Service
                 package "api"
                 service "StatusService"
-                rpc :GetStatus, StatusRequest, ::Common::Rpc::Status, ruby_method: :get_status
+                rpc :GetStatus, ::Google::Protobuf::Empty, ::Common::RPC::Status, ruby_method: :get_status
                 rpc :GetTimeOfDay, TimeOfDayRequest, ::Common::Type::TimeOfDay, ruby_method: :get_time_of_day
               end
             
@@ -274,7 +274,7 @@ RSpec.describe Twirp::ProtocPlugin do
             require "twirp"
             require_relative "api_pb"
   
-            module Api
+            module API
               class GreetService < ::Twirp::Service
                 package "api"
                 service "GreetService"
@@ -290,7 +290,7 @@ RSpec.describe Twirp::ProtocPlugin do
               class StatusService < ::Twirp::Service
                 package "api"
                 service "StatusService"
-                rpc :GetStatus, StatusRequest, ::Common::Rpc::Status, ruby_method: :get_status
+                rpc :GetStatus, ::Google::Protobuf::Empty, ::Common::RPC::Status, ruby_method: :get_status
                 rpc :GetTimeOfDay, TimeOfDayRequest, ::Common::Type::TimeOfDay, ruby_method: :get_time_of_day
               end
             
@@ -325,7 +325,7 @@ RSpec.describe Twirp::ProtocPlugin do
             require "twirp"
             require_relative "api_pb"
   
-            module Api
+            module API
               class GreetService < ::Twirp::Service
                 package "api"
                 service "GreetService"
@@ -337,7 +337,7 @@ RSpec.describe Twirp::ProtocPlugin do
               class StatusService < ::Twirp::Service
                 package "api"
                 service "StatusService"
-                rpc :GetStatus, StatusRequest, ::Common::Rpc::Status, ruby_method: :get_status
+                rpc :GetStatus, ::Google::Protobuf::Empty, ::Common::RPC::Status, ruby_method: :get_status
                 rpc :GetTimeOfDay, TimeOfDayRequest, ::Common::Type::TimeOfDay, ruby_method: :get_time_of_day
               end
             end
@@ -368,7 +368,7 @@ RSpec.describe Twirp::ProtocPlugin do
             require "twirp"
             require_relative "api_pb"
   
-            module Api
+            module API
               class GreetClient < ::Twirp::Client
                 package "api"
                 service "GreetService"
@@ -380,7 +380,7 @@ RSpec.describe Twirp::ProtocPlugin do
               class StatusClient < ::Twirp::Client
                 package "api"
                 service "StatusService"
-                rpc "GetStatus", StatusRequest, ::Common::Rpc::Status, ruby_method: :get_status
+                rpc "GetStatus", ::Google::Protobuf::Empty, ::Common::RPC::Status, ruby_method: :get_status
                 rpc "GetTimeOfDay", TimeOfDayRequest, ::Common::Type::TimeOfDay, ruby_method: :get_time_of_day
               end
             end
