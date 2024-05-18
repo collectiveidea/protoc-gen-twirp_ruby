@@ -94,13 +94,9 @@ module Twirp
       # @param service [Google::Protobuf::ServiceDescriptorProto]
       # @return [void]
       def generate_service_class(output, indent_level, service)
-        service_name = service.name
-        service_class_name = service.service_class_name
-
-        # Generate service class
-        output << line("class #{service_class_name} < ::Twirp::Service", indent_level)
+        output << line("class #{service.service_class_name} < ::Twirp::Service", indent_level)
         output << line("  package \"#{@proto_file.package}\"", indent_level) unless @proto_file.package.to_s.empty?
-        output << line("  service \"#{service_name}\"", indent_level)
+        output << line("  service \"#{service.name}\"", indent_level)
         service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
           input_type = convert_to_ruby_type(method.input_type, @proto_file.ruby_module)
           output_type = convert_to_ruby_type(method.output_type, @proto_file.ruby_module)
