@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "../../google/protobuf/compiler/plugin_pb"
-require_relative "../../core_ext/string/camel_case"
 require_relative "../../core_ext/string/snake_case"
 require_relative "descriptor_ext/service_descriptor_proto_ext"
 require "stringio"
@@ -98,8 +97,8 @@ module Twirp
         output << line("  package \"#{@proto_file.package}\"", indent_level) unless @proto_file.package.to_s.empty?
         output << line("  service \"#{service.name}\"", indent_level)
         service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
-          input_type = convert_to_ruby_type(method.input_type, @proto_file.ruby_module)
-          output_type = convert_to_ruby_type(method.output_type, @proto_file.ruby_module)
+          input_type = @proto_file.convert_to_ruby_type(method.input_type, @proto_file.ruby_module)
+          output_type = @proto_file.convert_to_ruby_type(method.output_type, @proto_file.ruby_module)
           ruby_method_name = method.name.snake_case
 
           output << line("  rpc :#{method.name}, #{input_type}, #{output_type}, ruby_method: :#{ruby_method_name}", indent_level)
@@ -135,54 +134,14 @@ module Twirp
         output << line("  package \"#{@proto_file.package}\"", indent_level) unless @proto_file.package.to_s.empty?
         output << line("  service \"#{service.name}\"", indent_level)
         service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
-          input_type = convert_to_ruby_type(method.input_type, @proto_file.ruby_module)
-          output_type = convert_to_ruby_type(method.output_type, @proto_file.ruby_module)
+          input_type = @proto_file.convert_to_ruby_type(method.input_type, @proto_file.ruby_module)
+          output_type = @proto_file.convert_to_ruby_type(method.output_type, @proto_file.ruby_module)
           ruby_method_name = method.name.snake_case
 
           # TRICKY: The service `rpc` DSL accepts a method symbol, but the client `rpc` DSL expects a string.
           output << line("  rpc \"#{method.name}\", #{input_type}, #{output_type}, ruby_method: :#{ruby_method_name}", indent_level)
         end
         output << line("end", indent_level)
-      end
-
-      # Converts either a package string like ".some.example.api" or a namespaced
-      # message like "google.protobuf.Empty" to an Array of Strings that can be
-      # used as Ruby constants (when joined with "::").
-      #
-      # ".some.example.api" becomes ["", Some", "Example", "Api"]
-      # "google.protobuf.Empty" becomes ["Google", "Protobuf", "Empty"]
-      #
-      # @param package_or_message [String]
-      # @return [Array<String>]
-      def split_to_constants(package_or_message)
-        package_or_message
-          .split(".")
-          .map { |s| s.camel_case }
-      end
-
-      # Converts a protobuf message type to a string containing
-      # the equivalent Ruby constant.
-      #
-      # Examples:
-      #
-      #   convert_to_ruby_type("example_message") => "ExampleMessage"
-      #   convert_to_ruby_type(".foo.bar.example_message") => "::Foo::Bar::ExampleMessage"
-      #   convert_to_ruby_type(".foo.bar.example_message", "::Foo") => "Bar::ExampleMessage"
-      #   convert_to_ruby_type(".foo.bar.example_message", "::Foo::Bar") => "ExampleMessage"
-      #   convert_to_ruby_type("google.protobuf.Empty", "::Foo") => "Google::Protobuf::Empty"
-      #
-      # @param message_type [String]
-      # @param current_module [String, nil]
-      # @return [String]
-      def convert_to_ruby_type(message_type, current_module = nil)
-        s = split_to_constants(message_type).join("::")
-
-        if !current_module.nil? && s.start_with?(current_module)
-          # Strip current module and trailing "::" prefix
-          s[current_module.size + 2..]
-        else
-          s
-        end
       end
     end
   end

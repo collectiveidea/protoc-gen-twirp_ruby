@@ -33,6 +33,48 @@ class Google::Protobuf::FileDescriptorProto
   def ruby_module
     return nil if package.to_s.empty?
 
-    @ruby_module ||= "::" + package.split(".").map { |s| s.camel_case }.join("::")
+    @ruby_module ||= "::" + split_to_constants(package).join("::")
+  end
+
+  # Converts a protobuf message type to a string containing
+  # the equivalent Ruby constant.
+  #
+  # Examples:
+  #
+  #   convert_to_ruby_type("example_message") => "ExampleMessage"
+  #   convert_to_ruby_type(".foo.bar.example_message") => "::Foo::Bar::ExampleMessage"
+  #   convert_to_ruby_type(".foo.bar.example_message", "::Foo") => "Bar::ExampleMessage"
+  #   convert_to_ruby_type(".foo.bar.example_message", "::Foo::Bar") => "ExampleMessage"
+  #   convert_to_ruby_type("google.protobuf.Empty", "::Foo") => "Google::Protobuf::Empty"
+  #
+  # @param message_type [String]
+  # @param current_module [String, nil]
+  # @return [String]
+  def convert_to_ruby_type(message_type, current_module = nil)
+    s = split_to_constants(message_type).join("::")
+
+    if !current_module.nil? && s.start_with?(current_module)
+      # Strip current module and trailing "::" prefix
+      s[current_module.size + 2..]
+    else
+      s
+    end
+  end
+
+  private
+
+  # Converts either a package string like ".some.example.api" or a namespaced
+  # message like "google.protobuf.Empty" to an Array of Strings that can be
+  # used as Ruby constants (when joined with "::").
+  #
+  # ".some.example.api" becomes ["", Some", "Example", "Api"]
+  # "google.protobuf.Empty" becomes ["Google", "Protobuf", "Empty"]
+  #
+  # @param package_or_message [String]
+  # @return [Array<String>]
+  def split_to_constants(package_or_message)
+    package_or_message
+      .split(".")
+      .map { |s| s.camel_case }
   end
 end
