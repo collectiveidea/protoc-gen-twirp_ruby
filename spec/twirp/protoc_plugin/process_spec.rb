@@ -178,7 +178,7 @@ RSpec.describe Twirp::ProtocPlugin do
                 service "GreetService"
                 rpc :SayHello, HelloRequest, HelloResponse, ruby_method: :say_hello
                 rpc :SayGoodbye, GoodbyeRequest, GoodbyeResponse, ruby_method: :say_goodbye
-                rpc :ChangeColor, ::Common::Type::Color, ChangeColorResponse, ruby_method: :change_color
+                rpc :ChangeColor, ::Common::Type::Color, ChangeColorWrapper::Response, ruby_method: :change_color
               end
             
               class GreetClient < ::Twirp::Client
@@ -229,7 +229,7 @@ RSpec.describe Twirp::ProtocPlugin do
                 service "GreetService"
                 rpc :SayHello, HelloRequest, HelloResponse, ruby_method: :say_hello
                 rpc :SayGoodbye, GoodbyeRequest, GoodbyeResponse, ruby_method: :say_goodbye
-                rpc :ChangeColor, ::Common::Type::Color, ChangeColorResponse, ruby_method: :change_color
+                rpc :ChangeColor, ::Common::Type::Color, ChangeColorWrapper::Response, ruby_method: :change_color
               end
             
               class GreetClient < ::Twirp::Client
@@ -280,7 +280,7 @@ RSpec.describe Twirp::ProtocPlugin do
                 service "GreetService"
                 rpc :SayHello, HelloRequest, HelloResponse, ruby_method: :say_hello
                 rpc :SayGoodbye, GoodbyeRequest, GoodbyeResponse, ruby_method: :say_goodbye
-                rpc :ChangeColor, ::Common::Type::Color, ChangeColorResponse, ruby_method: :change_color
+                rpc :ChangeColor, ::Common::Type::Color, ChangeColorWrapper::Response, ruby_method: :change_color
               end
             
               class GreetClient < ::Twirp::Client
@@ -331,7 +331,7 @@ RSpec.describe Twirp::ProtocPlugin do
                 service "GreetService"
                 rpc :SayHello, HelloRequest, HelloResponse, ruby_method: :say_hello
                 rpc :SayGoodbye, GoodbyeRequest, GoodbyeResponse, ruby_method: :say_goodbye
-                rpc :ChangeColor, ::Common::Type::Color, ChangeColorResponse, ruby_method: :change_color
+                rpc :ChangeColor, ::Common::Type::Color, ChangeColorWrapper::Response, ruby_method: :change_color
               end
   
               class StatusService < ::Twirp::Service
@@ -374,7 +374,7 @@ RSpec.describe Twirp::ProtocPlugin do
                 service "GreetService"
                 rpc "SayHello", HelloRequest, HelloResponse, ruby_method: :say_hello
                 rpc "SayGoodbye", GoodbyeRequest, GoodbyeResponse, ruby_method: :say_goodbye
-                rpc "ChangeColor", ::Common::Type::Color, ChangeColorResponse, ruby_method: :change_color
+                rpc "ChangeColor", ::Common::Type::Color, ChangeColorWrapper::Response, ruby_method: :change_color
               end
   
               class StatusClient < ::Twirp::Client

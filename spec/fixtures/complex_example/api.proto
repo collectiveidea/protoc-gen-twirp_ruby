@@ -21,11 +21,11 @@ option ruby_package = "API";
 service GreetService {
   rpc SayHello(HelloRequest) returns (HelloResponse);
   rpc SayGoodbye(GoodbyeRequest) returns (GoodbyeResponse);
-  rpc ChangeColor(.common.type.Color) returns (ChangeColorResponse);
+  rpc ChangeColor(common.type.Color) returns (ChangeColorWrapper.Response);
 }
 
 service StatusService {
-  rpc GetStatus(google.protobuf.Empty) returns (.common.rpc.Status);
+  rpc GetStatus(google.protobuf.Empty) returns (common.rpc.Status);
   rpc GetTimeOfDay(TimeOfDayRequest) returns (common.type.TimeOfDay);
 }
 
@@ -46,7 +46,13 @@ message GoodbyeResponse {
   string response = 1;
 }
 
-message ChangeColorResponse {}
+message ChangeColorWrapper {
+  message Response {
+    string details = 1;
+  }
+
+  Response response = 1;
+}
 
 message StatusRequest {}
 
