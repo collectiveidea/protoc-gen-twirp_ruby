@@ -4,6 +4,17 @@ require "google/protobuf/descriptor_pb"
 require "twirp/protoc_plugin/core_ext/string/camel_case"
 
 class Google::Protobuf::FileDescriptorProto
+  # The `FileDescriptorProto` contains a `dependency` array of all of the imported file
+  # name strings, in the order in which they appear in the source file.
+  #
+  # We want to create a parallel array, but instead of just the file names, we want
+  # the _references_ to those proto file descriptors. So, we declare the attribute
+  # here. NOTE: We also override `CodeGeneratorRequest` `decode` such that it automatically
+  # populates this array when the request is decoded.
+  #
+  # @return [Array<Google::Protobuf::FileDescriptorProto>]
+  attr_accessor :dependency_proto_files
+
   # @return [String] the output filename for the proto file's generated twirp code.
   #   For example, given a `name` of e.g. "some/example/hello.proto", the twirp output
   #   filename is "some/example/hello_twirp.rb"
