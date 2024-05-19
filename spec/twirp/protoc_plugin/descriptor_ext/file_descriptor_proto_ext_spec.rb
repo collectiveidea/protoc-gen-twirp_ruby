@@ -123,6 +123,28 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
       end
     end
 
+    context "when the file descriptor does not specify a package and has a nested type" do
+      let(:file_descriptor_proto) do
+        Google::Protobuf::FileDescriptorProto.new(
+          message_type: [
+            Google::Protobuf::DescriptorProto.new(
+              name: "ExampleMessage",
+              nested_type: [
+                Google::Protobuf::DescriptorProto.new(
+                  name: "NestedMessage"
+                )
+              ]
+            )
+          ]
+        )
+      end
+
+      it "generates the expected output" do
+        type = file_descriptor_proto.convert_to_ruby_type(".ExampleMessage.NestedMessage")
+        expect(type).to eq("ExampleMessage::NestedMessage")
+      end
+    end
+
     context "when the file descriptor references a dependency that does not specify a ruby_package" do
       let(:google_protobuf_empty_descriptor) do
         Google::Protobuf::FileDescriptorProto.new(

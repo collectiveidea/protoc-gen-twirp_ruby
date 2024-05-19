@@ -71,6 +71,7 @@ class Google::Protobuf::FileDescriptorProto
   # ... then:
   #
   #   convert_to_ruby_type(".foo.bar.example_message") => "ExampleMessage"
+  #   convert_to_ruby_type(".foo.bar.ExampleMessage.NestedMessage") => "ExampleMessage::NestedMessage"
   #   convert_to_ruby_type(".google.protobuf.Empty") => "::Google::Protobuf::Empty"
   #   convert_to_ruby_type(".other.file.baz.example_message") => "::Baz::ExampleMessage"
   #   convert_to_ruby_type(".third.file.example_message") => "::Third::File::ExampleMessage"
@@ -89,11 +90,11 @@ class Google::Protobuf::FileDescriptorProto
   private
 
   # Converts either a package string like ".some.example.api" or a namespaced
-  # message like "google.protobuf.Empty" to an Array of Strings that can be
+  # message like ".google.protobuf.Empty" to an Array of Strings that can be
   # used as Ruby constants (when joined with "::").
   #
   # ".some.example.api" becomes ["", Some", "Example", "Api"]
-  # "google.protobuf.Empty" becomes ["Google", "Protobuf", "Empty"]
+  # ".google.protobuf.Empty" becomes ["", Google", "Protobuf", "Empty"]
   #
   # @param package_or_message [String]
   # @return [Array<String>]
@@ -110,9 +111,10 @@ class Google::Protobuf::FileDescriptorProto
   #
   #   For example:
   #     ".example_message" => "ExampleMessage"
-  #     ".foo.bar.example_message" => "::Foo::Bar::ExampleMessage"
+  #     ".foo.bar.ExampleMessage => "::Foo::Bar::ExampleMessage"
+  #     ".foo.bar.ExampleMessage.NestedMessage" => "::Foo::Bar::ExampleMessage::NestedMessage"
   #     ".google.protobuf.Empty" => "Google::Protobuf::Empty"
-  #     ".common.bar.baz.other_type" => "::Common::Baz::ExampleMessage"
+  #     ".common.bar.baz.other_type" => "::Common::Baz::OtherType"
   #       (when type is imported from a proto file with package = "common.bar.baz"
   #       and `option ruby_package = "Common::Baz";` specified)
   def ruby_type_map
@@ -123,25 +125,17 @@ class Google::Protobuf::FileDescriptorProto
     @ruby_type_map
   end
 
+  # Loops through the messages in the proto file, and recurses through the messages in
+  # dependent proto files, to construct the ruby type map for all types within the file.
+  #
+  # @see [#ruby_type_map]
+  # @param proto_file [Google::Protobuf::FileDescriptorProto]
+  # @return [Hash<String, String>]
   def build_ruby_type_map(proto_file)
     type_map = {}
 
-    proto_file.message_type.each do |message_type| # message_type: Google::Protobuf::DescriptorProto
-      key = if proto_file.package.to_s.empty?
-        ".#{message_type.name}"
-      else
-        ".#{proto_file.package}.#{message_type.name}"
-      end
-
-      value = if proto_file.ruby_module.empty?
-        message_type.name.camel_case
-      else
-        "#{proto_file.ruby_module}::#{message_type.name.camel_case}"
-      end
-
-      # TODO: Need to also recurse over nested types
-
-      type_map[key] = value
+    proto_file.message_type.each do |message_type|
+      add_message_type(type_map, proto_file, message_type)
     end
 
     proto_file.dependency_proto_files.each do |dependency_proto_file|
@@ -149,5 +143,41 @@ class Google::Protobuf::FileDescriptorProto
     end
 
     type_map
+  end
+
+  # Adds the message type's key and value to the type map, recursively handling nested message
+  # types along the way.
+  #
+  # @param type_map [Hash<String, String>]
+  # @param proto_file [Google::Protobuf::FileDescriptorProto] The proto file containing the message type
+  # @param message_type [Google::Protobuf::DescriptorProto]
+  # @param parent_key [String, nil] In the recursive case, this is the parent message type key so
+  #   that the nested child type can be properly namespaced.
+  # @param parent_value [String, nil] In the recursive case, this is the parent message type value
+  #   so that the nested type can be properly namespaced.
+  # @return [void]
+  def add_message_type(type_map, proto_file, message_type, parent_key = nil, parent_value = nil)
+    key = if !parent_key.nil?
+      "#{parent_key}.#{message_type.name}"
+    elsif proto_file.package.to_s.empty?
+      ".#{message_type.name}"
+    else
+      ".#{proto_file.package}.#{message_type.name}"
+    end
+
+    value = if !parent_value.nil?
+      "#{parent_value}::#{message_type.name.camel_case}"
+    elsif proto_file.ruby_module.empty?
+      message_type.name.camel_case
+    else
+      "#{proto_file.ruby_module}::#{message_type.name.camel_case}"
+    end
+
+    type_map[key] = value
+
+    # Recurse over nested types, using the current message_type's key and value as the parent values
+    message_type.nested_type.each do |nested_type|
+      add_message_type(type_map, proto_file, nested_type, key, value)
+    end
   end
 end
