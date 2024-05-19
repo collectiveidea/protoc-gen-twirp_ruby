@@ -99,7 +99,7 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
     end
   end
 
-  describe "#convert_to_ruby_type" do
+  describe "#ruby_type_for" do
     before do
       # TRICKY: We're not creating via `CodeGeneratorRequest.decode` so we need be sure
       # to set this to an empty array here.
@@ -118,7 +118,7 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
       end
 
       it "generates the expected output" do
-        type = file_descriptor_proto.convert_to_ruby_type(".example_message")
+        type = file_descriptor_proto.ruby_type_for(".example_message")
         expect(type).to eq("ExampleMessage")
       end
     end
@@ -140,7 +140,7 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
       end
 
       it "generates the expected output" do
-        type = file_descriptor_proto.convert_to_ruby_type(".ExampleMessage.NestedMessage")
+        type = file_descriptor_proto.ruby_type_for(".ExampleMessage.NestedMessage")
         expect(type).to eq("ExampleMessage::NestedMessage")
       end
     end
@@ -176,12 +176,12 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
         end
 
         it "works for a message within the file" do
-          type = file_descriptor_proto.convert_to_ruby_type(".ExampleMessage")
+          type = file_descriptor_proto.ruby_type_for(".ExampleMessage")
           expect(type).to eq("ExampleMessage")
         end
 
         it "works with a package outside of the current module" do
-          type = file_descriptor_proto.convert_to_ruby_type(".google.protobuf.Empty")
+          type = file_descriptor_proto.ruby_type_for(".google.protobuf.Empty")
           expect(type).to eq("::Google::Protobuf::Empty")
         end
       end
@@ -200,12 +200,12 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
         end
 
         it "works for a message in the same package" do
-          type = file_descriptor_proto.convert_to_ruby_type(".foo.bar.ExampleMessage")
+          type = file_descriptor_proto.ruby_type_for(".foo.bar.ExampleMessage")
           expect(type).to eq("ExampleMessage")
         end
 
         it "works with a package outside of the current module" do
-          type = file_descriptor_proto.convert_to_ruby_type(".google.protobuf.Empty")
+          type = file_descriptor_proto.ruby_type_for(".google.protobuf.Empty")
           expect(type).to eq("::Google::Protobuf::Empty")
         end
       end
@@ -225,14 +225,14 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
         end
 
         it "works for a message in the same package" do
-          type = file_descriptor_proto.convert_to_ruby_type(".foo.bar.example_message")
+          type = file_descriptor_proto.ruby_type_for(".foo.bar.example_message")
           # No ::BAZ::ExampleMessage here because, while we specify a ruby package, the message is
           # in the same package so we drop the ruby module.
           expect(type).to eq("ExampleMessage")
         end
 
         it "works with a package outside of the current module" do
-          type = file_descriptor_proto.convert_to_ruby_type(".google.protobuf.Empty")
+          type = file_descriptor_proto.ruby_type_for(".google.protobuf.Empty")
           expect(type).to eq("::Google::Protobuf::Empty")
         end
       end
@@ -266,7 +266,7 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
       end
 
       it "uses the other file's ruby package when reference a message in the other file" do
-        type = file_descriptor_proto.convert_to_ruby_type(".other.file.baz.ExampleMessage")
+        type = file_descriptor_proto.ruby_type_for(".other.file.baz.ExampleMessage")
         expect(type).to eq("::Baz::ExampleMessage")
       end
     end

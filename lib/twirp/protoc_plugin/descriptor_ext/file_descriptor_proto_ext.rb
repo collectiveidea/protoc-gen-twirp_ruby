@@ -70,15 +70,15 @@ class Google::Protobuf::FileDescriptorProto
   #
   # ... then:
   #
-  #   convert_to_ruby_type(".foo.bar.example_message") => "ExampleMessage"
-  #   convert_to_ruby_type(".foo.bar.ExampleMessage.NestedMessage") => "ExampleMessage::NestedMessage"
-  #   convert_to_ruby_type(".google.protobuf.Empty") => "::Google::Protobuf::Empty"
-  #   convert_to_ruby_type(".other.file.baz.example_message") => "::Baz::ExampleMessage"
-  #   convert_to_ruby_type(".third.file.example_message") => "::Third::File::ExampleMessage"
+  #   ruby_type_for(".foo.bar.example_message") => "ExampleMessage"
+  #   ruby_type_for(".foo.bar.ExampleMessage.NestedMessage") => "ExampleMessage::NestedMessage"
+  #   ruby_type_for(".google.protobuf.Empty") => "::Google::Protobuf::Empty"
+  #   ruby_type_for(".other.file.baz.example_message") => "::Baz::ExampleMessage"
+  #   ruby_type_for(".third.file.example_message") => "::Third::File::ExampleMessage"
   #
   # @param message_type [String]
   # @return [String]
-  def convert_to_ruby_type(message_type)
+  def ruby_type_for(message_type)
     ruby_type = ruby_type_map[message_type]
 
     # For types in the same module, remove module and trailing "::"
