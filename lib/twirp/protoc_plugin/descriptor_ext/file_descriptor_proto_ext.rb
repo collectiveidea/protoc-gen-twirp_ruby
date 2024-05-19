@@ -56,29 +56,34 @@ class Google::Protobuf::FileDescriptorProto
     end
   end
 
-  # Converts a protobuf message type to a string containing
-  # the equivalent Ruby constant.
+  # Converts a protobuf message type to a string containing the equivalent Ruby constant,
+  # relative to the current proto file's Ruby module.
   #
-  # Examples:
+  # Respects the `ruby_package` option, both for the current proto file and for all
+  # message types that are imported if the imported file also specifies a `ruby_package`.
   #
-  #   convert_to_ruby_type("example_message") => "ExampleMessage"
-  #   convert_to_ruby_type(".foo.bar.example_message") => "::Foo::Bar::ExampleMessage"
-  #   convert_to_ruby_type(".foo.bar.example_message", "::Foo") => "Bar::ExampleMessage"
-  #   convert_to_ruby_type(".foo.bar.example_message", "::Foo::Bar") => "ExampleMessage"
-  #   convert_to_ruby_type("google.protobuf.Empty", "::Foo") => "Google::Protobuf::Empty"
+  # For example, given ...
+  #
+  #   1) the current file has `package "foo.bar";` and `option ruby_package = "Foo::Bar";`
+  #   2) an imported file has `package "other.file.baz";` and `option ruby_package = "Baz";`
+  #   3) a third imported file has `package "third.file";` without a `ruby_package` option.
+  #
+  # ... then:
+  #
+  #   convert_to_ruby_type(".foo.bar.example_message") => "ExampleMessage"
+  #   convert_to_ruby_type(".google.protobuf.Empty") => "::Google::Protobuf::Empty"
+  #   convert_to_ruby_type(".other.file.baz.example_message") => "::Baz::ExampleMessage"
+  #   convert_to_ruby_type(".third.file.example_message") => "::Third::File::ExampleMessage"
   #
   # @param message_type [String]
-  # @param current_module [String] optional current ruby module
   # @return [String]
-  def convert_to_ruby_type(message_type, current_module = "")
-    s = split_to_constants(message_type).join("::")
+  def convert_to_ruby_type(message_type)
+    ruby_type = ruby_type_map[message_type]
 
-    if !current_module.empty? && s.start_with?(current_module)
-      # Strip current module and trailing "::" prefix
-      s[current_module.size + 2..]
-    else
-      s
-    end
+    # For types in the same module, remove module and trailing "::"
+    ruby_type = ruby_type.delete_prefix(ruby_module + "::") unless ruby_module.empty?
+
+    ruby_type
   end
 
   private
@@ -96,5 +101,53 @@ class Google::Protobuf::FileDescriptorProto
     package_or_message
       .split(".")
       .map { |s| s.camel_case }
+  end
+
+  # @return [Hash<String, String>] the type mappings for the proto file (and all
+  #   imported proto files), keyed by the the protobuf name (starting with `.` when
+  #   package is specified). Values correspond to the fully qualified Ruby
+  #   type, respecting the `ruby_package` option of the file if present.
+  #
+  #   For example:
+  #     ".example_message" => "ExampleMessage"
+  #     ".foo.bar.example_message" => "::Foo::Bar::ExampleMessage"
+  #     ".google.protobuf.Empty" => "Google::Protobuf::Empty"
+  #     ".common.bar.baz.other_type" => "::Common::Baz::ExampleMessage"
+  #       (when type is imported from a proto file with package = "common.bar.baz"
+  #       and `option ruby_package = "Common::Baz";` specified)
+  def ruby_type_map
+    if @ruby_type_map.nil?
+      @ruby_type_map = build_ruby_type_map(self)
+    end
+
+    @ruby_type_map
+  end
+
+  def build_ruby_type_map(proto_file)
+    type_map = {}
+
+    proto_file.message_type.each do |message_type| # message_type: Google::Protobuf::DescriptorProto
+      key = if proto_file.package.to_s.empty?
+        ".#{message_type.name}"
+      else
+        ".#{proto_file.package}.#{message_type.name}"
+      end
+
+      value = if proto_file.ruby_module.empty?
+        message_type.name.camel_case
+      else
+        "#{proto_file.ruby_module}::#{message_type.name.camel_case}"
+      end
+
+      # TODO: Need to also recurse over nested types
+
+      type_map[key] = value
+    end
+
+    proto_file.dependency_proto_files.each do |dependency_proto_file|
+      type_map.merge! build_ruby_type_map(dependency_proto_file)
+    end
+
+    type_map
   end
 end
