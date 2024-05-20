@@ -157,21 +157,8 @@ class Google::Protobuf::FileDescriptorProto
   #   so that the nested type can be properly namespaced.
   # @return [void]
   def add_message_type(type_map, proto_file, message_type, parent_key = nil, parent_value = nil)
-    key = if !parent_key.nil?
-      "#{parent_key}.#{message_type.name}"
-    elsif proto_file.package.to_s.empty?
-      ".#{message_type.name}"
-    else
-      ".#{proto_file.package}.#{message_type.name}"
-    end
-
-    value = if !parent_value.nil?
-      "#{parent_value}::#{message_type.name.camel_case}"
-    elsif proto_file.ruby_module.empty?
-      message_type.name.camel_case
-    else
-      "#{proto_file.ruby_module}::#{message_type.name.camel_case}"
-    end
+    key = type_map_key(proto_file, message_type, parent_key)
+    value = type_map_value(proto_file, message_type, parent_value)
 
     type_map[key] = value
 
@@ -179,5 +166,39 @@ class Google::Protobuf::FileDescriptorProto
     message_type.nested_type.each do |nested_type|
       add_message_type(type_map, proto_file, nested_type, key, value)
     end
+  end
+
+  # @param proto_file [Google::Protobuf::FileDescriptorProto] The proto file containing the message type
+  # @param message_type [Google::Protobuf::DescriptorProto]
+  # @param parent_key [String, nil] In the recursive case, this is the parent message type key so
+  #   that the nested child type can be properly namespaced.
+  # @return [String]
+  def type_map_key(proto_file, message_type, parent_key)
+    key_prefix = if !parent_key.nil?
+      "#{parent_key}."
+    elsif proto_file.package.to_s.empty?
+      "."
+    else
+      ".#{proto_file.package}."
+    end
+
+    "#{key_prefix}#{message_type.name}"
+  end
+
+  # @param proto_file [Google::Protobuf::FileDescriptorProto] The proto file containing the message type
+  # @param message_type [Google::Protobuf::DescriptorProto]
+  # @param parent_value [String, nil] In the recursive case, this is the parent message type value
+  #   so that the nested type can be properly namespaced.
+  # @return [String]
+  def type_map_value(proto_file, message_type, parent_value)
+    value_prefix = if !parent_value.nil?
+      "#{parent_value}::"
+    elsif proto_file.ruby_module.empty?
+      ""
+    else
+      "#{proto_file.ruby_module}::"
+    end
+
+    "#{value_prefix}#{message_type.name.camel_case}"
   end
 end
