@@ -42,8 +42,14 @@ class Google::Protobuf::Compiler::CodeGeneratorRequest
       file_descriptor_proto.dependency_proto_files = []
 
       file_descriptor_proto.dependency.each do |dependent_file_name|
-        file_descriptor_proto.dependency_proto_files << proto_files.find { |proto_file| proto_file.name == dependent_file_name }
+        file_descriptor_proto.dependency_proto_files << proto_file_for(dependent_file_name)
       end
     end
+  end
+
+  # @param name [String]
+  # @return [Google::Protobuf::FileDescriptorProto, nil]
+  def proto_file_for(name)
+    proto_files.find { |proto_file| proto_file.name == name }
   end
 end
