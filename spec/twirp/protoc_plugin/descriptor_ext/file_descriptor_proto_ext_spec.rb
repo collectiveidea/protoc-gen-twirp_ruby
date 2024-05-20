@@ -47,4 +47,67 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
       expect(proto_file.has_service?).to eq(true)
     end
   end
+
+  describe "#ruby_module" do
+    it "returns nil when no package is present" do
+      proto_file = Google::Protobuf::FileDescriptorProto.new(name: "hello.proto")
+      expect(proto_file.ruby_module).to be_nil
+    end
+
+    it "returns the converted package name when present" do
+      proto_file = Google::Protobuf::FileDescriptorProto.new(name: "hello.proto", package: "my_company.example.api")
+      expect(proto_file.ruby_module).to eq("::MyCompany::Example::Api")
+    end
+  end
+
+  describe "#convert_to_ruby_type" do
+    let(:file_descriptor_proto) { Google::Protobuf::FileDescriptorProto.new }
+
+    it "works without a package" do
+      type = file_descriptor_proto.convert_to_ruby_type("example_message")
+      expect(type).to eq("ExampleMessage")
+    end
+
+    it "works with a package and without a module" do
+      type = file_descriptor_proto.convert_to_ruby_type(".foo.bar.example_message")
+      expect(type).to eq("::Foo::Bar::ExampleMessage")
+    end
+
+    it "works with a package and top-level module" do
+      type = file_descriptor_proto.convert_to_ruby_type(".foo.bar.example_message", "::Foo")
+      expect(type).to eq("Bar::ExampleMessage")
+    end
+
+    it "works with a package and top-level nested module" do
+      type = file_descriptor_proto.convert_to_ruby_type(".foo.bar.example_message", "::Foo::Bar")
+      expect(type).to eq("ExampleMessage")
+    end
+
+    it "works with a package outside of the current module" do
+      type = file_descriptor_proto.convert_to_ruby_type("google.protobuf.Empty", "::Foo")
+      expect(type).to eq("Google::Protobuf::Empty")
+    end
+  end
+
+  describe "#split_to_constants" do
+    let(:file_descriptor_proto) { Google::Protobuf::FileDescriptorProto.new }
+    def call_private_method_with(message_type)
+      file_descriptor_proto.send(:split_to_constants, message_type)
+    end
+
+    it "works with a namespaced message" do
+      constants = call_private_method_with("google.protobuf.Empty")
+      expect(constants).to eq(%w[Google Protobuf Empty])
+    end
+
+    it "works with a package that has a leading dot" do
+      constants = call_private_method_with(".some.example.api")
+      expect(constants).to eq(%W[#{""} Some Example Api])
+    end
+
+    it "works with a top-level message without a package" do
+      constants = call_private_method_with("ExampleMessage")
+      expect(constants).to eq(%w[ExampleMessage])
+    end
+  end
 end

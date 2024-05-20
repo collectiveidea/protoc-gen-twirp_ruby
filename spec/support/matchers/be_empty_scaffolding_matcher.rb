@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-# @param proto_file [String] the source proto file (with path), e.g. "example/api.proto"
-# @param relative_ruby_pb_require [String] the filename of the ruby protofub to require, e.g. "api_rb"
+# @param source_proto_file [String] the source proto file (with path), e.g. "example/api.proto"
+# @param relative_ruby_pb_require [String] the filename of the ruby protobuf to require, e.g. "api_rb"
 # @param modules [Array<String>] the optional containing module(s), e.g. ["Example", "Api"]
 RSpec::Matchers.define :be_empty_scaffolding do |source_proto_file, relative_ruby_pb_require, modules|
   description { "be a twirp file containing only empty scaffolding" }

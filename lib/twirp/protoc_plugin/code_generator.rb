@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require_relative "../../google/protobuf/compiler/plugin_pb"
-require_relative "../../core_ext/string/camel_case"
 require_relative "../../core_ext/string/snake_case"
 require_relative "descriptor_ext/service_descriptor_proto_ext"
 require "stringio"
@@ -36,14 +35,12 @@ module Twirp
         START
 
         indent_level = 0
-        modules = split_to_constants(@proto_file.package)
+        modules = @proto_file.ruby_module&.delete_prefix("::")&.split("::") || []
 
         modules.each do |mod|
           output << line("module #{mod}", indent_level)
           indent_level += 1
         end
-
-        current_module = "::" + modules.join("::")
 
         unless @proto_file.has_service?
           output << line("# No services found; To skip generating this file, specify `--twirp_ruby_opt=skip-empty`.", indent_level)
@@ -54,7 +51,7 @@ module Twirp
           output << "\n" if index > 0
 
           if %i[service both].include?(@options[:generate])
-            generate_service_class(output, indent_level, service, @proto_file.package, current_module)
+            generate_service_class(output, indent_level, service)
           end
 
           if @options[:generate] == :both
@@ -64,7 +61,7 @@ module Twirp
             generate_client_class_for_service(output, indent_level, service)
           elsif @options[:generate] == :client
             # When generating only the client, we can't use the `client_for` DSL.
-            generate_client_class_standalone(output, indent_level, service, @proto_file.package, current_module)
+            generate_client_class_standalone(output, indent_level, service)
           end
         end
 
@@ -94,20 +91,14 @@ module Twirp
       # @param output [#<<] the output to append the generated service code to
       # @param indent_level [Integer] the number of double spaces to indent the generated code by
       # @param service [Google::Protobuf::ServiceDescriptorProto]
-      # @param package [String, nil] the optional package of the proto file that contains the service, e.g. "example.hello_world"
-      # @param current_module [String, nil] the optional name of the containing module, e.g. "::Example::HelloWorld"
       # @return [void]
-      def generate_service_class(output, indent_level, service, package, current_module)
-        service_name = service.name
-        service_class_name = service.service_class_name
-
-        # Generate service class
-        output << line("class #{service_class_name} < ::Twirp::Service", indent_level)
-        output << line("  package \"#{package}\"", indent_level) unless package.to_s.empty?
-        output << line("  service \"#{service_name}\"", indent_level)
+      def generate_service_class(output, indent_level, service)
+        output << line("class #{service.service_class_name} < ::Twirp::Service", indent_level)
+        output << line("  package \"#{@proto_file.package}\"", indent_level) unless @proto_file.package.to_s.empty?
+        output << line("  service \"#{service.name}\"", indent_level)
         service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
-          input_type = convert_to_ruby_type(method.input_type, current_module)
-          output_type = convert_to_ruby_type(method.output_type, current_module)
+          input_type = @proto_file.convert_to_ruby_type(method.input_type, @proto_file.ruby_module)
+          output_type = @proto_file.convert_to_ruby_type(method.output_type, @proto_file.ruby_module)
           ruby_method_name = method.name.snake_case
 
           output << line("  rpc :#{method.name}, #{input_type}, #{output_type}, ruby_method: :#{ruby_method_name}", indent_level)
@@ -137,62 +128,20 @@ module Twirp
       # @param output [#<<] the output to append the generated service code to
       # @param indent_level [Integer] the number of double spaces to indent the generated code by
       # @param service [Google::Protobuf::ServiceDescriptorProto]
-      # @param package [String, nil] the optional package of the proto file that contains the service, e.g. "example.hello_world"
-      # @param current_module [String, nil] the optional name of the containing module, e.g. "::Example::HelloWorld"
       # @return [void]
-      def generate_client_class_standalone(output, indent_level, service, package, current_module)
+      def generate_client_class_standalone(output, indent_level, service)
         output << line("class #{service.client_class_name} < ::Twirp::Client", indent_level)
-        output << line("  package \"#{package}\"", indent_level) unless package.to_s.empty?
+        output << line("  package \"#{@proto_file.package}\"", indent_level) unless @proto_file.package.to_s.empty?
         output << line("  service \"#{service.name}\"", indent_level)
         service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
-          input_type = convert_to_ruby_type(method.input_type, current_module)
-          output_type = convert_to_ruby_type(method.output_type, current_module)
+          input_type = @proto_file.convert_to_ruby_type(method.input_type, @proto_file.ruby_module)
+          output_type = @proto_file.convert_to_ruby_type(method.output_type, @proto_file.ruby_module)
           ruby_method_name = method.name.snake_case
 
           # TRICKY: The service `rpc` DSL accepts a method symbol, but the client `rpc` DSL expects a string.
           output << line("  rpc \"#{method.name}\", #{input_type}, #{output_type}, ruby_method: :#{ruby_method_name}", indent_level)
         end
         output << line("end", indent_level)
-      end
-
-      # Converts either a package string like ".some.example.api" or a namespaced
-      # message like "google.protobuf.Empty" to an Array of Strings that can be
-      # used as Ruby constants (when joined with "::").
-      #
-      # ".some.example.api" becomes ["", Some", "Example", "Api"]
-      # "google.protobuf.Empty" becomes ["Google", "Protobuf", "Empty"]
-      #
-      # @param package_or_message [String]
-      # @return [Array<String>]
-      def split_to_constants(package_or_message)
-        package_or_message
-          .split(".")
-          .map { |s| s.camel_case }
-      end
-
-      # Converts a protobuf message type to a string containing
-      # the equivalent Ruby constant.
-      #
-      # Examples:
-      #
-      #   convert_to_ruby_type("example_message") => "ExampleMessage"
-      #   convert_to_ruby_type(".foo.bar.example_message") => "::Foo::Bar::ExampleMessage"
-      #   convert_to_ruby_type(".foo.bar.example_message", "::Foo") => "Bar::ExampleMessage"
-      #   convert_to_ruby_type(".foo.bar.example_message", "::Foo::Bar") => "ExampleMessage"
-      #   convert_to_ruby_type("google.protobuf.Empty", "::Foo") => "Google::Protobuf::Empty"
-      #
-      # @param message_type [String]
-      # @param current_module [String, nil]
-      # @return [String]
-      def convert_to_ruby_type(message_type, current_module = nil)
-        s = split_to_constants(message_type).join("::")
-
-        if !current_module.nil? && s.start_with?(current_module)
-          # Strip current module and trailing "::" prefix
-          s[current_module.size + 2..]
-        else
-          s
-        end
       end
     end
   end
