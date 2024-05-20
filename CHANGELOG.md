@@ -1,5 +1,9 @@
 ## [Unreleased]
 
+- Nothing (yet)
+
+## [1.1.0] - 2024-05-21
+
 - Add support for `ruby_package` option in proto files for generated output - [#28](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/28)
 - Update to `protoc` 26.1 to generate the plugin interface Ruby messages - [#27](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/27)
 - Add `generate=<service|client|both>` option to customize generated output - [#23](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/23)
