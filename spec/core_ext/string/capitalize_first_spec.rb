@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "core_ext/string/capitalize_first"
+require "twirp/protoc_plugin/core_ext/string/capitalize_first"
 
 RSpec.describe String do
   describe "#capitalize_first" do

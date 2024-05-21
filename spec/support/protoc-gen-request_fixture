@@ -3,7 +3,6 @@
 # frozen_string_literal: true
 
 require_relative "../../lib/google/protobuf/compiler/plugin_pb"
-require_relative "../../lib/twirp/protoc_plugin"
 require "open3"
 
 # A simple `protoc` plugin that aids in the development of other plugins. Specifically,

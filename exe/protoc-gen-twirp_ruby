@@ -2,7 +2,11 @@
 
 # frozen_string_literal: true
 
-require_relative "../lib/twirp/protoc_plugin"
+# Ensure `lib` is in the load path
+lib = File.expand_path("../lib", __dir__)
+$LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
+
+require "twirp/protoc_plugin"
 
 begin
   $stdout << Twirp::ProtocPlugin.process($stdin.read)

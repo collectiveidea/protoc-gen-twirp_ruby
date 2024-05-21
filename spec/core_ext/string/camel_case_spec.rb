@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "core_ext/string/camel_case"
+require "twirp/protoc_plugin/core_ext/string/camel_case"
 
 RSpec.describe String do
   describe "#camel_case" do

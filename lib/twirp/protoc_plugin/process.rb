@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
-require_relative "../../core_ext/file/delete_extension"
-require_relative "../../google/protobuf/compiler/plugin_pb"
-require_relative "descriptor_ext/file_descriptor_proto_ext"
+require "twirp/protoc_plugin/core_ext/file/delete_extension"
+require "google/protobuf/compiler/plugin_pb"
+require "twirp/protoc_plugin/descriptor_ext/file_descriptor_proto_ext"
 require_relative "code_generator"
 
 module Twirp

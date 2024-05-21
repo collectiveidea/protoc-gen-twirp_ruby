@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "core_ext/file/delete_extension"
+require "twirp/protoc_plugin/core_ext/file/delete_extension"
 
 RSpec.describe File do
   describe ".delete_extension" do

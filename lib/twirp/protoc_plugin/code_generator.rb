@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
-require_relative "../../google/protobuf/compiler/plugin_pb"
-require_relative "../../core_ext/string/snake_case"
-require_relative "descriptor_ext/service_descriptor_proto_ext"
 require "stringio"
+require "google/protobuf/compiler/plugin_pb"
+require "twirp/protoc_plugin/core_ext/string/snake_case"
+require "twirp/protoc_plugin/descriptor_ext/service_descriptor_proto_ext"
 
 module Twirp
   module ProtocPlugin
