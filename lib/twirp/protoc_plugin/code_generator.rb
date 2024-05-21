@@ -35,7 +35,7 @@ module Twirp
         START
 
         indent_level = 0
-        modules = @proto_file.ruby_module&.delete_prefix("::")&.split("::") || []
+        modules = @proto_file.ruby_module.delete_prefix("::").split("::")
 
         modules.each do |mod|
           output << line("module #{mod}", indent_level)
@@ -97,8 +97,8 @@ module Twirp
         output << line("  package \"#{@proto_file.package}\"", indent_level) unless @proto_file.package.to_s.empty?
         output << line("  service \"#{service.name}\"", indent_level)
         service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
-          input_type = @proto_file.convert_to_ruby_type(method.input_type, @proto_file.ruby_module)
-          output_type = @proto_file.convert_to_ruby_type(method.output_type, @proto_file.ruby_module)
+          input_type = @proto_file.ruby_type_for(method.input_type)
+          output_type = @proto_file.ruby_type_for(method.output_type)
           ruby_method_name = method.name.snake_case
 
           output << line("  rpc :#{method.name}, #{input_type}, #{output_type}, ruby_method: :#{ruby_method_name}", indent_level)
@@ -134,8 +134,8 @@ module Twirp
         output << line("  package \"#{@proto_file.package}\"", indent_level) unless @proto_file.package.to_s.empty?
         output << line("  service \"#{service.name}\"", indent_level)
         service["method"].each do |method| # method: <Google::Protobuf::MethodDescriptorProto>
-          input_type = @proto_file.convert_to_ruby_type(method.input_type, @proto_file.ruby_module)
-          output_type = @proto_file.convert_to_ruby_type(method.output_type, @proto_file.ruby_module)
+          input_type = @proto_file.ruby_type_for(method.input_type)
+          output_type = @proto_file.ruby_type_for(method.output_type)
           ruby_method_name = method.name.snake_case
 
           # TRICKY: The service `rpc` DSL accepts a method symbol, but the client `rpc` DSL expects a string.

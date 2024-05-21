@@ -4,6 +4,17 @@ require "google/protobuf/descriptor_pb"
 require "twirp/protoc_plugin/core_ext/string/camel_case"
 
 class Google::Protobuf::FileDescriptorProto
+  # The `FileDescriptorProto` contains a `dependency` array of all of the imported file
+  # name strings, in the order in which they appear in the source file.
+  #
+  # We want to create a parallel array, but instead of just the file names, we want
+  # the _references_ to those proto file descriptors. So, we declare the attribute
+  # here. NOTE: We also override `CodeGeneratorRequest` `decode` such that it automatically
+  # populates this array when the request is decoded.
+  #
+  # @return [Array<Google::Protobuf::FileDescriptorProto>]
+  attr_accessor :dependency_proto_files
+
   # @return [String] the output filename for the proto file's generated twirp code.
   #   For example, given a `name` of e.g. "some/example/hello.proto", the twirp output
   #   filename is "some/example/hello_twirp.rb"
@@ -27,49 +38,63 @@ class Google::Protobuf::FileDescriptorProto
     !service.empty?
   end
 
-  # @return [String] the ruby module for this proto file. This is the `package` of
-  #   the file (converted to UpperCamelCase), with a leading top-level namespace
-  #   qualifier "::", e.g.: "::MyCompany::Example::Api". Returns `nil` when no
-  #   package is specified.
+  # @return [String] the ruby module for this proto file. Gives precedence to
+  #   the `ruby_package` option if specified, then the `package` of the file
+  #   (converted to UpperCamelCase). Includes a leading top-level namespace
+  #   qualifier "::", e.g.: "::MyCompany::Example::Api". Returns `""` when neither
+  #   ruby_package nor package is specified.
   def ruby_module
-    return nil if package.to_s.empty?
+    @ruby_module ||= begin
+      pkg = options.ruby_package unless options&.ruby_package.to_s.empty?
+      pkg ||= split_to_constants(package).join("::").to_s unless package.to_s.empty?
 
-    @ruby_module ||= "::" + split_to_constants(package).join("::")
+      if pkg.nil?
+        "" # Set to "" instead of nil to properly memoize and avoid re-calculating
+      else
+        "::" + pkg
+      end
+    end
   end
 
-  # Converts a protobuf message type to a string containing
-  # the equivalent Ruby constant.
+  # Converts a protobuf message type to a string containing the equivalent Ruby constant,
+  # relative to the current proto file's Ruby module.
   #
-  # Examples:
+  # Respects the `ruby_package` option, both for the current proto file and for all
+  # message types that are imported if the imported file also specifies a `ruby_package`.
   #
-  #   convert_to_ruby_type("example_message") => "ExampleMessage"
-  #   convert_to_ruby_type(".foo.bar.example_message") => "::Foo::Bar::ExampleMessage"
-  #   convert_to_ruby_type(".foo.bar.example_message", "::Foo") => "Bar::ExampleMessage"
-  #   convert_to_ruby_type(".foo.bar.example_message", "::Foo::Bar") => "ExampleMessage"
-  #   convert_to_ruby_type("google.protobuf.Empty", "::Foo") => "Google::Protobuf::Empty"
+  # For example, given ...
+  #
+  #   1) the current file has `package "foo.bar";` and `option ruby_package = "Foo::Bar";`
+  #   2) an imported file has `package "other.file.baz";` and `option ruby_package = "Baz";`
+  #   3) a third imported file has `package "third.file";` without a `ruby_package` option.
+  #
+  # ... then:
+  #
+  #   ruby_type_for(".foo.bar.example_message") => "ExampleMessage"
+  #   ruby_type_for(".foo.bar.ExampleMessage.NestedMessage") => "ExampleMessage::NestedMessage"
+  #   ruby_type_for(".google.protobuf.Empty") => "::Google::Protobuf::Empty"
+  #   ruby_type_for(".other.file.baz.example_message") => "::Baz::ExampleMessage"
+  #   ruby_type_for(".third.file.example_message") => "::Third::File::ExampleMessage"
   #
   # @param message_type [String]
-  # @param current_module [String, nil]
   # @return [String]
-  def convert_to_ruby_type(message_type, current_module = nil)
-    s = split_to_constants(message_type).join("::")
+  def ruby_type_for(message_type)
+    ruby_type = ruby_type_map[message_type]
 
-    if !current_module.nil? && s.start_with?(current_module)
-      # Strip current module and trailing "::" prefix
-      s[current_module.size + 2..]
-    else
-      s
-    end
+    # For types in the same module, remove module and trailing "::"
+    ruby_type = ruby_type.delete_prefix(ruby_module + "::") unless ruby_module.empty?
+
+    ruby_type
   end
 
   private
 
   # Converts either a package string like ".some.example.api" or a namespaced
-  # message like "google.protobuf.Empty" to an Array of Strings that can be
+  # message like ".google.protobuf.Empty" to an Array of Strings that can be
   # used as Ruby constants (when joined with "::").
   #
   # ".some.example.api" becomes ["", Some", "Example", "Api"]
-  # "google.protobuf.Empty" becomes ["Google", "Protobuf", "Empty"]
+  # ".google.protobuf.Empty" becomes ["", Google", "Protobuf", "Empty"]
   #
   # @param package_or_message [String]
   # @return [Array<String>]
@@ -77,5 +102,103 @@ class Google::Protobuf::FileDescriptorProto
     package_or_message
       .split(".")
       .map { |s| s.camel_case }
+  end
+
+  # @return [Hash<String, String>] the type mappings for the proto file (and all
+  #   imported proto files), keyed by the the protobuf name (starting with `.` when
+  #   package is specified). Values correspond to the fully qualified Ruby
+  #   type, respecting the `ruby_package` option of the file if present.
+  #
+  #   For example:
+  #     ".example_message" => "ExampleMessage"
+  #     ".foo.bar.ExampleMessage => "::Foo::Bar::ExampleMessage"
+  #     ".foo.bar.ExampleMessage.NestedMessage" => "::Foo::Bar::ExampleMessage::NestedMessage"
+  #     ".google.protobuf.Empty" => "Google::Protobuf::Empty"
+  #     ".common.bar.baz.other_type" => "::Common::Baz::OtherType"
+  #       (when type is imported from a proto file with package = "common.bar.baz"
+  #       and `option ruby_package = "Common::Baz";` specified)
+  def ruby_type_map
+    if @ruby_type_map.nil?
+      @ruby_type_map = build_ruby_type_map(self)
+    end
+
+    @ruby_type_map
+  end
+
+  # Loops through the messages in the proto file, and recurses through the messages in
+  # dependent proto files, to construct the ruby type map for all types within the file.
+  #
+  # @see [#ruby_type_map]
+  # @param proto_file [Google::Protobuf::FileDescriptorProto]
+  # @return [Hash<String, String>]
+  def build_ruby_type_map(proto_file)
+    type_map = {}
+
+    proto_file.message_type.each do |message_type|
+      add_message_type(type_map, proto_file, message_type)
+    end
+
+    proto_file.dependency_proto_files.each do |dependency_proto_file|
+      type_map.merge! build_ruby_type_map(dependency_proto_file)
+    end
+
+    type_map
+  end
+
+  # Adds the message type's key and value to the type map, recursively handling nested message
+  # types along the way.
+  #
+  # @param type_map [Hash<String, String>]
+  # @param proto_file [Google::Protobuf::FileDescriptorProto] The proto file containing the message type
+  # @param message_type [Google::Protobuf::DescriptorProto]
+  # @param parent_key [String, nil] In the recursive case, this is the parent message type key so
+  #   that the nested child type can be properly namespaced.
+  # @param parent_value [String, nil] In the recursive case, this is the parent message type value
+  #   so that the nested type can be properly namespaced.
+  # @return [void]
+  def add_message_type(type_map, proto_file, message_type, parent_key = nil, parent_value = nil)
+    key = type_map_key(proto_file, message_type, parent_key)
+    value = type_map_value(proto_file, message_type, parent_value)
+
+    type_map[key] = value
+
+    # Recurse over nested types, using the current message_type's key and value as the parent values
+    message_type.nested_type.each do |nested_type|
+      add_message_type(type_map, proto_file, nested_type, key, value)
+    end
+  end
+
+  # @param proto_file [Google::Protobuf::FileDescriptorProto] The proto file containing the message type
+  # @param message_type [Google::Protobuf::DescriptorProto]
+  # @param parent_key [String, nil] In the recursive case, this is the parent message type key so
+  #   that the nested child type can be properly namespaced.
+  # @return [String]
+  def type_map_key(proto_file, message_type, parent_key)
+    key_prefix = if !parent_key.nil?
+      "#{parent_key}."
+    elsif proto_file.package.to_s.empty?
+      "."
+    else
+      ".#{proto_file.package}."
+    end
+
+    "#{key_prefix}#{message_type.name}"
+  end
+
+  # @param proto_file [Google::Protobuf::FileDescriptorProto] The proto file containing the message type
+  # @param message_type [Google::Protobuf::DescriptorProto]
+  # @param parent_value [String, nil] In the recursive case, this is the parent message type value
+  #   so that the nested type can be properly namespaced.
+  # @return [String]
+  def type_map_value(proto_file, message_type, parent_value)
+    value_prefix = if !parent_value.nil?
+      "#{parent_value}::"
+    elsif proto_file.ruby_module.empty?
+      ""
+    else
+      "#{proto_file.ruby_module}::"
+    end
+
+    "#{value_prefix}#{message_type.name.camel_case}"
   end
 end

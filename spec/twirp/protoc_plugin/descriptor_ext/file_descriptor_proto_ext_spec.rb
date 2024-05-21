@@ -49,43 +49,226 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
   end
 
   describe "#ruby_module" do
-    it "returns nil when no package is present" do
+    it "returns an empty string when no package is present" do
       proto_file = Google::Protobuf::FileDescriptorProto.new(name: "hello.proto")
-      expect(proto_file.ruby_module).to be_nil
+      expect(proto_file.ruby_module).to eq("")
     end
 
     it "returns the converted package name when present" do
       proto_file = Google::Protobuf::FileDescriptorProto.new(name: "hello.proto", package: "my_company.example.api")
       expect(proto_file.ruby_module).to eq("::MyCompany::Example::Api")
     end
+
+    it "returns the ruby_package when both ruby_package option and package present" do
+      proto_file = Google::Protobuf::FileDescriptorProto.new(
+        name: "hello.proto",
+        package: "my_company.example.api",
+        options: Google::Protobuf::FileOptions.new(ruby_package: "My::API")
+      )
+
+      expect(proto_file.ruby_module).to eq("::My::API")
+    end
+
+    it "returns the ruby_package when no package present" do
+      proto_file = Google::Protobuf::FileDescriptorProto.new(
+        name: "hello.proto",
+        options: Google::Protobuf::FileOptions.new(ruby_package: "My::API")
+      )
+
+      expect(proto_file.ruby_module).to eq("::My::API")
+    end
+
+    it "returns the converted package when ruby_package is specified but empty" do
+      proto_file = Google::Protobuf::FileDescriptorProto.new(
+        name: "hello.proto",
+        package: "is.specified",
+        options: Google::Protobuf::FileOptions.new(ruby_package: "")
+      )
+
+      expect(proto_file.ruby_module).to eq("::Is::Specified")
+    end
+
+    it "returns an empty string when both ruby_package and package are empty" do
+      proto_file = Google::Protobuf::FileDescriptorProto.new(
+        name: "hello.proto",
+        package: "",
+        options: Google::Protobuf::FileOptions.new(ruby_package: "")
+      )
+
+      expect(proto_file.ruby_module).to eq("")
+    end
   end
 
-  describe "#convert_to_ruby_type" do
-    let(:file_descriptor_proto) { Google::Protobuf::FileDescriptorProto.new }
-
-    it "works without a package" do
-      type = file_descriptor_proto.convert_to_ruby_type("example_message")
-      expect(type).to eq("ExampleMessage")
+  describe "#ruby_type_for" do
+    before do
+      # TRICKY: We're not creating via `CodeGeneratorRequest.decode` so we need be sure
+      # to set this to an empty array here.
+      file_descriptor_proto.dependency_proto_files = []
     end
 
-    it "works with a package and without a module" do
-      type = file_descriptor_proto.convert_to_ruby_type(".foo.bar.example_message")
-      expect(type).to eq("::Foo::Bar::ExampleMessage")
+    context "when the file descriptor does not specify a package" do
+      let(:file_descriptor_proto) do
+        Google::Protobuf::FileDescriptorProto.new(
+          message_type: [
+            Google::Protobuf::DescriptorProto.new(
+              name: "example_message"
+            )
+          ]
+        )
+      end
+
+      it "generates the expected output" do
+        type = file_descriptor_proto.ruby_type_for(".example_message")
+        expect(type).to eq("ExampleMessage")
+      end
     end
 
-    it "works with a package and top-level module" do
-      type = file_descriptor_proto.convert_to_ruby_type(".foo.bar.example_message", "::Foo")
-      expect(type).to eq("Bar::ExampleMessage")
+    context "when the file descriptor does not specify a package and has a nested type" do
+      let(:file_descriptor_proto) do
+        Google::Protobuf::FileDescriptorProto.new(
+          message_type: [
+            Google::Protobuf::DescriptorProto.new(
+              name: "ExampleMessage",
+              nested_type: [
+                Google::Protobuf::DescriptorProto.new(
+                  name: "NestedMessage"
+                )
+              ]
+            )
+          ]
+        )
+      end
+
+      it "generates the expected output" do
+        type = file_descriptor_proto.ruby_type_for(".ExampleMessage.NestedMessage")
+        expect(type).to eq("ExampleMessage::NestedMessage")
+      end
     end
 
-    it "works with a package and top-level nested module" do
-      type = file_descriptor_proto.convert_to_ruby_type(".foo.bar.example_message", "::Foo::Bar")
-      expect(type).to eq("ExampleMessage")
+    context "when the file descriptor references a dependency that does not specify a ruby_package" do
+      let(:google_protobuf_empty_descriptor) do
+        Google::Protobuf::FileDescriptorProto.new(
+          package: "google.protobuf",
+          message_type: [
+            Google::Protobuf::DescriptorProto.new(
+              name: "Empty"
+            )
+          ]
+        )
+      end
+
+      before do
+        google_protobuf_empty_descriptor.dependency_proto_files = []
+
+        file_descriptor_proto.dependency_proto_files << google_protobuf_empty_descriptor
+      end
+
+      context "when the file descriptor does not specify a package" do
+        let(:file_descriptor_proto) do
+          Google::Protobuf::FileDescriptorProto.new(
+            dependency: ["google/protobuf/empty.proto"],
+            message_type: [
+              Google::Protobuf::DescriptorProto.new(
+                name: "ExampleMessage"
+              )
+            ]
+          )
+        end
+
+        it "works for a message within the file" do
+          type = file_descriptor_proto.ruby_type_for(".ExampleMessage")
+          expect(type).to eq("ExampleMessage")
+        end
+
+        it "works with a package outside of the current module" do
+          type = file_descriptor_proto.ruby_type_for(".google.protobuf.Empty")
+          expect(type).to eq("::Google::Protobuf::Empty")
+        end
+      end
+
+      context "when the file descriptor specifies a package" do
+        let(:file_descriptor_proto) do
+          Google::Protobuf::FileDescriptorProto.new(
+            package: "foo.bar",
+            dependency: ["google/protobuf/empty.proto"],
+            message_type: [
+              Google::Protobuf::DescriptorProto.new(
+                name: "ExampleMessage"
+              )
+            ]
+          )
+        end
+
+        it "works for a message in the same package" do
+          type = file_descriptor_proto.ruby_type_for(".foo.bar.ExampleMessage")
+          expect(type).to eq("ExampleMessage")
+        end
+
+        it "works with a package outside of the current module" do
+          type = file_descriptor_proto.ruby_type_for(".google.protobuf.Empty")
+          expect(type).to eq("::Google::Protobuf::Empty")
+        end
+      end
+
+      context "when the file descriptor specifies a package and the ruby_package option" do
+        let(:file_descriptor_proto) do
+          Google::Protobuf::FileDescriptorProto.new(
+            package: "foo.bar",
+            dependency: ["google/protobuf/empty.proto"],
+            options: Google::Protobuf::FileOptions.new(ruby_package: "BAZ"),
+            message_type: [
+              Google::Protobuf::DescriptorProto.new(
+                name: "example_message"
+              )
+            ]
+          )
+        end
+
+        it "works for a message in the same package" do
+          type = file_descriptor_proto.ruby_type_for(".foo.bar.example_message")
+          # No ::BAZ::ExampleMessage here because, while we specify a ruby package, the message is
+          # in the same package so we drop the ruby module.
+          expect(type).to eq("ExampleMessage")
+        end
+
+        it "works with a package outside of the current module" do
+          type = file_descriptor_proto.ruby_type_for(".google.protobuf.Empty")
+          expect(type).to eq("::Google::Protobuf::Empty")
+        end
+      end
     end
 
-    it "works with a package outside of the current module" do
-      type = file_descriptor_proto.convert_to_ruby_type("google.protobuf.Empty", "::Foo")
-      expect(type).to eq("Google::Protobuf::Empty")
+    context "when the file descriptor references a dependency that specifies a ruby_package" do
+      let(:other_file_descriptor) do
+        Google::Protobuf::FileDescriptorProto.new(
+          package: "other.file.baz",
+          options: Google::Protobuf::FileOptions.new(ruby_package: "Baz"),
+          message_type: [
+            Google::Protobuf::DescriptorProto.new(
+              name: "ExampleMessage"
+            )
+          ]
+        )
+      end
+
+      let(:file_descriptor_proto) do
+        Google::Protobuf::FileDescriptorProto.new(
+          name: "hello.proto",
+          dependency: ["baz.proto"],
+          options: Google::Protobuf::FileOptions.new(ruby_package: "")
+        )
+      end
+
+      before do
+        other_file_descriptor.dependency_proto_files = []
+
+        file_descriptor_proto.dependency_proto_files << other_file_descriptor
+      end
+
+      it "uses the other file's ruby package when reference a message in the other file" do
+        type = file_descriptor_proto.ruby_type_for(".other.file.baz.ExampleMessage")
+        expect(type).to eq("::Baz::ExampleMessage")
+      end
     end
   end
 

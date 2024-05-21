@@ -2,26 +2,30 @@ syntax = "proto3";
 
 // This is a contrived example that demonstrates:
 //
-// 1. Code generation for multiple services, each with multiple rpcs
-// 2. Using imported types for request and response types
-// 3. Services proto in a completely different package
+//  1. Code generation for multiple services, each with multiple rpcs
+//  2. Using imported types (both built-in and custom) for request / response
+//  3. Mixing packages across services and imports
+//  4. Usage of the `ruby_package` option.
 //
-// This file does _not_ demonstrate best practices.
+// This file is _not_ intended to demonstrate best practices.
 
 package api;
 
+import "google/protobuf/empty.proto";
 import "common/rpc/status.proto";
 import "common/type/color.proto";
 import "common/type/time_of_day.proto";
 
+option ruby_package = "API";
+
 service GreetService {
   rpc SayHello(HelloRequest) returns (HelloResponse);
   rpc SayGoodbye(GoodbyeRequest) returns (GoodbyeResponse);
-  rpc ChangeColor(.common.type.Color) returns (ChangeColorResponse);
+  rpc ChangeColor(common.type.Color) returns (ChangeColorWrapper.Response);
 }
 
 service StatusService {
-  rpc GetStatus(StatusRequest) returns (.common.rpc.Status);
+  rpc GetStatus(google.protobuf.Empty) returns (common.rpc.Status);
   rpc GetTimeOfDay(TimeOfDayRequest) returns (common.type.TimeOfDay);
 }
 
@@ -42,7 +46,13 @@ message GoodbyeResponse {
   string response = 1;
 }
 
-message ChangeColorResponse {}
+message ChangeColorWrapper {
+  message Response {
+    string details = 1;
+  }
+
+  Response response = 1;
+}
 
 message StatusRequest {}
 
