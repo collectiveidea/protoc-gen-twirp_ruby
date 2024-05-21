@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "core_ext/string/capitalize_first"
+require "twirp/protoc_plugin/core_ext/string/capitalize_first"
 
 class String
   # Returns the string converted to either lowerCamelCase or UpperCamelCase.

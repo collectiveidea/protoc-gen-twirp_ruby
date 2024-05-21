@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "core_ext/file/delete_extension"
+require "twirp/protoc_plugin/core_ext/file/delete_extension"
 require "google/protobuf/compiler/plugin_pb"
 require "twirp/protoc_plugin/descriptor_ext/file_descriptor_proto_ext"
 require_relative "code_generator"

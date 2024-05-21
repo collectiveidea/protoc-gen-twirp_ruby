@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "core_ext/string/snake_case"
+require "twirp/protoc_plugin/core_ext/string/snake_case"
 
 RSpec.describe String do
   describe "#snake_case" do

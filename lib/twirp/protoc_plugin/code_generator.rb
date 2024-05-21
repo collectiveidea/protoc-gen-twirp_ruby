@@ -1,8 +1,8 @@
 # frozen_string_literal: true
 
 require "stringio"
-require "core_ext/string/snake_case"
 require "google/protobuf/compiler/plugin_pb"
+require "twirp/protoc_plugin/core_ext/string/snake_case"
 require "twirp/protoc_plugin/descriptor_ext/service_descriptor_proto_ext"
 
 module Twirp

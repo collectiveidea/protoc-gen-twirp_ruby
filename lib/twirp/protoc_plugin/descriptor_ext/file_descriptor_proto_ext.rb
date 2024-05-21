@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
-require "core_ext/string/camel_case"
 require "google/protobuf/descriptor_pb"
+require "twirp/protoc_plugin/core_ext/string/camel_case"
 
 class Google::Protobuf::FileDescriptorProto
   # @return [String] the output filename for the proto file's generated twirp code.
