@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative "../../../core_ext/string/camel_case"
+require_relative "../../../google/protobuf/descriptor_pb"
 
 class Google::Protobuf::ServiceDescriptorProto
   def service_class_name
