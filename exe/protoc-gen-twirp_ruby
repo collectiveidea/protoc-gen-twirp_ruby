@@ -2,7 +2,7 @@
 
 # frozen_string_literal: true
 
-require_relative "../lib/twirp/protoc_plugin"
+require "twirp/protoc_plugin"
 
 begin
   $stdout << Twirp::ProtocPlugin.process($stdin.read)

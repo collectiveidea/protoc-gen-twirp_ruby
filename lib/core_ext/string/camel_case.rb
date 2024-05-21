@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "capitalize_first"
+require "core_ext/string/capitalize_first"
 
 class String
   # Returns the string converted to either lowerCamelCase or UpperCamelCase.
