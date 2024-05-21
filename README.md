@@ -97,7 +97,19 @@ protoc --ruby_out=. --twirp_ruby_out=. ./example/hello_world.proto
 
 ## Releasing
 
-To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+To release a new version:
+
+ * Update the version number in `version.rb`
+ * Update the CHANGELOG.md
+     * Create a section for the new version and move the unreleased version there
+ * Re-generate the example:
+     * `protoc --plugin=protoc-gen-twirp_ruby=./exe/protoc-gen-twirp_ruby --ruby_out=. --twirp_ruby_out=. ./example/hello_world.proto`
+ * Submit a PR; see [#30](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/30)
+ * Once merged, create and push the tag. This releases to RubyGems.
+    *  `git tag v<version> && git push origin --tags`
+ * Create a GitHub release: 
+     * `gh release create v<version>`
+     * Edit the release notes to link to the notes in the CHANGELOG.md for the version
 
 ## Contributing
 
