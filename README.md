@@ -4,11 +4,18 @@
 
 # protoc-gen-twirp_ruby - A Pure Ruby `protoc` generator for Twirp
 
-This gem provides a `protoc` plugin that generates [Twirp-Ruby](https://github.com/arthurnn/twirp-ruby) services and clients.
+This gem is a `protoc` plugin that generates [Twirp-Ruby](https://github.com/arthurnn/twirp-ruby) services and clients.
 
-**NOTE:** Twirp-Ruby [already has a protoc plugin available](https://github.com/arthurnn/twirp-ruby/tree/main/protoc-gen-twirp_ruby)
-released as a `go` module. This project creates an alternative plugin written in Ruby and distributed as a gem that
-produces comparable output while being both more familiar and accessible to Ruby developers.
+## Why use this? 
+
+Twirp-Ruby [already does this](https://github.com/arthurnn/twirp-ruby/tree/main/protoc-gen-twirp_ruby)
+via a `go` module. So why use this version? 
+
+* Easier install (just add the gem).
+* You already know and love Ruby.
+* We're committed to keeping it up to date.
+
+The Go version works fine (we used it for years) but it was missing features that we wanted. Building in Ruby allows us to iterate quicker and makes it easier for others to contribute.
 
 ## Installation
 
