@@ -9,7 +9,7 @@ Gem::Specification.new do |spec|
   spec.email = "info@collectiveidea.com"
 
   spec.summary = "A Ruby protoc plugin generator for Twirp-Ruby."
-  spec.description = "A Ruby protoc plugin generator for Twirp-Ruby."
+  spec.description = "A protoc plugin that generates Twirp services and clients. A pure Ruby alternative to the Go version that ships with Twirp-Ruby."
   spec.homepage = "https://github.com/collectiveidea/protoc-gen-twirp_ruby"
 
   spec.license = "MIT"
