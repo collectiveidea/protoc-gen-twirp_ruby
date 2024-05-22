@@ -31,23 +31,7 @@ Run `gem install protoc-gen-twirp_ruby` or add it to your Gemfile:
 gem "protoc-gen-twirp_ruby"
 ```
 
-## Migration from the `protoc-gen-twirp_ruby` go module
-
-If you have previously installed the `go` version of the plugin via the [Twirp-Ruby Code Generation wiki page](https://github.com/arthurnn/twirp-ruby/wiki/Code-Generation)
-instructions, then you'll want to uninstall it before invoking the `protoc` command.
-
-```bash
-rm `go env GOPATH`/bin/protoc-gen-twirp_ruby
-```
-
-### Notable plugin differences
-
-This gem generates nearly identical Twirp-Ruby output as the go version plugin. Some notable differences
-that might affect migration include:
-
- * Generated output code is in [standardrb style](https://github.com/standardrb/standard).
- * Generated service and client class names are improved for well-named protobuf services. See [#6](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/6).
- * Supports various protoc command line [configuration options](https://github.com/collectiveidea/protoc-gen-twirp_ruby?tab=readme-ov-file#options).
+If you previously used the Go version, see our [Migration Instructions](#migrating-from-the-go-module).
 
 ## Usage
 
@@ -69,6 +53,26 @@ specifying `--twirp_ruby_opt=<option>` on the `protoc` command line.
    * `generate=client` - only generate `::Twirp::Client` subclass(es).
    * `generate=both` - generate both services and clients. This is the default option to preserve
      backwards compatibility.
+
+## Migrating from the Go module
+
+If you previously installed the `protoc-gen-twirp_ruby` Go module via the [Twirp-Ruby's Code Generation wiki page](https://github.com/arthurnn/twirp-ruby/wiki/Code-Generation)
+instructions, then you'll want to uninstall it before invoking the `protoc` command.
+
+```bash
+rm `go env GOPATH`/bin/protoc-gen-twirp_ruby
+```
+
+### Differences form the Go module
+
+This gem generates nearly identical Twirp-Ruby output as the Go version. Some notable differences
+that might affect migration include:
+
+ * Generated output code is in [standardrb style](https://github.com/standardrb/standard).
+ * Generated service and client class names are improved for well-named protobuf services. See [#6](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/6).
+ * Supports `ruby_package` in `.proto` files
+ * Supports various protoc command line [configuration options](https://github.com/collectiveidea/protoc-gen-twirp_ruby?tab=readme-ov-file#options).
+
 
 ## Development
 
