@@ -2,13 +2,20 @@
 [![Build](https://github.com/collectiveidea/protoc-gen-twirp_ruby/actions/workflows/main.yml/badge.svg)](https://github.com/collectiveidea/protoc-gen-twirp_ruby/actions/workflows/main.yml)
 [![Ruby Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://github.com/standardrb/standard)
 
-# protoc-gen-twirp_ruby
+# protoc-gen-twirp_ruby - A `protoc` plugin for Twirp-Ruby.
 
-This gem provides a `protoc` plugin that generates [Twirp-Ruby](https://github.com/arthurnn/twirp-ruby) services and clients.
+This gem is a `protoc` plugin that generates [Twirp-Ruby](https://github.com/arthurnn/twirp-ruby) services and clients.
 
-**NOTE:** Twirp-Ruby [already has a protoc plugin available](https://github.com/arthurnn/twirp-ruby/tree/main/protoc-gen-twirp_ruby)
-released as a `go` module. This project creates an alternative plugin written in Ruby and distributed as a gem that
-produces comparable output while being both more familiar and accessible to Ruby developers.
+## Why use this? 
+
+Twirp-Ruby [already does this](https://github.com/arthurnn/twirp-ruby/tree/main/protoc-gen-twirp_ruby)
+via a `go` module. So why use this version? 
+
+* Easier install (just add the gem).
+* You already know and love Ruby.
+* We're committed to keeping it up to date.
+
+The Go version works fine (we used it for years) but it was missing features that we wanted. Building in Ruby allows us to iterate quicker and makes it easier for others to contribute.
 
 ## Installation
 
@@ -25,41 +32,17 @@ the `--ruby_out` option). It does not generate Twirp services and clients; that 
 
 ### Install the `protoc-gen-twirp_ruby` plugin
  
-Install the gem by adding it to your Gemfile:
+Run `gem install protoc-gen-twirp_ruby` or add it to your Gemfile:
 
 ```ruby
-group :development, :test do
-  "protoc-gen-twirp_ruby"
-end
-````
-
-Alternatively, install the gem on your system:
-
-```bash
-gem install protoc-gen-twirp_ruby
+gem "protoc-gen-twirp_ruby", group: :development
 ```
 
-## Migration from the `protoc-gen-twirp_ruby` go module
-
-If you have previously installed the `go` version of the plugin via the [Twirp-Ruby Code Generation wiki page](https://github.com/arthurnn/twirp-ruby/wiki/Code-Generation)
-instructions, then you'll want to uninstall it before invoking the `protoc` command.
-
-```bash
-rm `go env GOPATH`/bin/protoc-gen-twirp_ruby
-```
-
-### Notable plugin differences
-
-This gem generates nearly identical Twirp-Ruby output as the go version plugin. Some notable differences
-that might affect migration include:
-
- * Generated output code is in [standardrb style](https://github.com/standardrb/standard).
- * Generated service and client class names are improved for well-named protobuf services. See [#6](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/6).
- * Supports various protoc command line [configuration options](https://github.com/collectiveidea/protoc-gen-twirp_ruby?tab=readme-ov-file#options).
+If you previously used the Go version, see our [Migration Instructions](#migrating-from-the-go-module).
 
 ## Usage
 
-Once `protoc` and the `protoc-gen-twirp_ruby` gem is installed, pass `--twirp_ruby_out` to generate Twirp-Ruby code:
+Pass `--twirp_ruby_out` to `protoc` to generate Twirp-Ruby code:
 
 ```bash
 protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. ./path/to/service.proto
@@ -67,8 +50,7 @@ protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. ./path/to/service.proto
 
 ### Options
 
-The plugin supports the following options to configure code generation. Pass options by
-specifying `--twirp_ruby_opt=<option>` on the `protoc` command line.
+You can configure the code generation. Pass options by specifying `--twirp_ruby_opt=<option>` on the `protoc` command line.
 
  * `skip-empty`: Avoid generating a `_twirp.rb` for a `.proto` with no service definitions. By default, a `_twirp.rb`
    file is generated for every proto file listed on the command line, even if the file is empty scaffolding. 
@@ -77,6 +59,32 @@ specifying `--twirp_ruby_opt=<option>` on the `protoc` command line.
    * `generate=client` - only generate `::Twirp::Client` subclass(es).
    * `generate=both` - generate both services and clients. This is the default option to preserve
      backwards compatibility.
+
+Example (with two options): 
+
+```bash
+protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. --twirp_ruby_opt=generate=client --twirp_ruby_opt=skip-empty ./path/to/service.proto
+```
+
+## Migrating from the Go module
+
+If you previously installed the `protoc-gen-twirp_ruby` Go module via the [Twirp-Ruby's Code Generation wiki page](https://github.com/arthurnn/twirp-ruby/wiki/Code-Generation)
+instructions, then you'll want to uninstall it before invoking the `protoc` command.
+
+```bash
+rm `go env GOPATH`/bin/protoc-gen-twirp_ruby
+```
+
+### Differences from the Go module
+
+This gem generates nearly identical Twirp-Ruby output as the Go version. Some notable differences
+that might affect migration include:
+
+ * Generated output code is in [standardrb style](https://github.com/standardrb/standard).
+ * Generated service and client class names are improved for well-named protobuf services. See [#6](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/6).
+ * Supports `ruby_package` in `.proto` files
+ * Supports various protoc command line [configuration options](https://github.com/collectiveidea/protoc-gen-twirp_ruby?tab=readme-ov-file#options).
+
 
 ## Development
 
