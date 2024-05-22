@@ -2,7 +2,7 @@
 [![Build](https://github.com/collectiveidea/protoc-gen-twirp_ruby/actions/workflows/main.yml/badge.svg)](https://github.com/collectiveidea/protoc-gen-twirp_ruby/actions/workflows/main.yml)
 [![Ruby Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://github.com/standardrb/standard)
 
-# protoc-gen-twirp_ruby - A Pure Ruby `protoc` generator for Twirp
+# protoc-gen-twirp_ruby - A Pure Ruby `protoc` Generator for Twirp
 
 This gem is a `protoc` plugin that generates [Twirp-Ruby](https://github.com/arthurnn/twirp-ruby) services and clients.
 
@@ -70,7 +70,7 @@ instructions, then you'll want to uninstall it before invoking the `protoc` comm
 rm `go env GOPATH`/bin/protoc-gen-twirp_ruby
 ```
 
-### Differences form the Go module
+### Differences from the Go module
 
 This gem generates nearly identical Twirp-Ruby output as the Go version. Some notable differences
 that might affect migration include:
