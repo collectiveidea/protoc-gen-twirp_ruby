@@ -1,6 +1,6 @@
 ## [Unreleased]
 
-- Nothing (yet)
+- Remove unnecessary `racc` runtime dependency - [#33](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/33)
 
 ## [1.1.0] - 2024-05-21
 
