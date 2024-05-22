@@ -2,7 +2,7 @@
 [![Build](https://github.com/collectiveidea/protoc-gen-twirp_ruby/actions/workflows/main.yml/badge.svg)](https://github.com/collectiveidea/protoc-gen-twirp_ruby/actions/workflows/main.yml)
 [![Ruby Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://github.com/standardrb/standard)
 
-# protoc-gen-twirp_ruby - A Pure Ruby `protoc` Generator for Twirp
+# protoc-gen-twirp_ruby - A `protoc` plugin for Twirp-Ruby.
 
 This gem is a `protoc` plugin that generates [Twirp-Ruby](https://github.com/arthurnn/twirp-ruby) services and clients.
 
@@ -60,7 +60,7 @@ You can configure the code generation. Pass options by specifying `--twirp_ruby_
    * `generate=both` - generate both services and clients. This is the default option to preserve
      backwards compatibility.
 
-Example (two options): 
+Example (with two options): 
 
 ```bash
 protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. --twirp_ruby_opt=generate=client --twirp_ruby_opt=skip-empty ./path/to/service.proto
