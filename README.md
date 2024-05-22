@@ -35,7 +35,7 @@ the `--ruby_out` option). It does not generate Twirp services and clients; that 
 Run `gem install protoc-gen-twirp_ruby` or add it to your Gemfile:
 
 ```ruby
-gem "protoc-gen-twirp_ruby"
+gem "protoc-gen-twirp_ruby", group: :development
 ```
 
 If you previously used the Go version, see our [Migration Instructions](#migrating-from-the-go-module).
