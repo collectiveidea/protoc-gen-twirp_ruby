@@ -42,7 +42,7 @@ If you previously used the Go version, see our [Migration Instructions](#migrati
 
 ## Usage
 
-Once `protoc` and the `protoc-gen-twirp_ruby` gem is installed, pass `--twirp_ruby_out` to generate Twirp-Ruby code:
+Pass `--twirp_ruby_out` to `protoc` to generate Twirp-Ruby code:
 
 ```bash
 protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. ./path/to/service.proto
@@ -50,7 +50,7 @@ protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. ./path/to/service.proto
 
 ### Options
 
-The plugin supports the following options to configure code generation. Pass options by
+You can configure the `protoc` code generation . Pass options by
 specifying `--twirp_ruby_opt=<option>` on the `protoc` command line.
 
  * `skip-empty`: Avoid generating a `_twirp.rb` for a `.proto` with no service definitions. By default, a `_twirp.rb`
