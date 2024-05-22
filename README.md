@@ -61,6 +61,12 @@ specifying `--twirp_ruby_opt=<option>` on the `protoc` command line.
    * `generate=both` - generate both services and clients. This is the default option to preserve
      backwards compatibility.
 
+Example (two options): 
+
+```bash
+protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. --twirp_ruby_opt=generate=client --twirp_ruby_opt=skip-empty ./path/to/service.proto
+```
+
 ## Migrating from the Go module
 
 If you previously installed the `protoc-gen-twirp_ruby` Go module via the [Twirp-Ruby's Code Generation wiki page](https://github.com/arthurnn/twirp-ruby/wiki/Code-Generation)
