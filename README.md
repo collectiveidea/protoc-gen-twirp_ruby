@@ -50,8 +50,7 @@ protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. ./path/to/service.proto
 
 ### Options
 
-You can configure the `protoc` code generation . Pass options by
-specifying `--twirp_ruby_opt=<option>` on the `protoc` command line.
+You can configure the code generation. Pass options by specifying `--twirp_ruby_opt=<option>` on the `protoc` command line.
 
  * `skip-empty`: Avoid generating a `_twirp.rb` for a `.proto` with no service definitions. By default, a `_twirp.rb`
    file is generated for every proto file listed on the command line, even if the file is empty scaffolding. 
