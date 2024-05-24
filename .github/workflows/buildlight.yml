@@ -2,8 +2,11 @@ name: Buildlight
 
 on:
   workflow_run:
-    workflows: [Ruby]
-    branches: [main]
+    workflows:
+      - rspec
+      - standardrb
+    branches:
+      - main
 
 jobs:
   buildlight:
