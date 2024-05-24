@@ -83,20 +83,20 @@ that might affect migration include:
  * Generated output code is in [standardrb style](https://github.com/standardrb/standard).
  * Generated service and client class names are improved for well-named protobuf services. See [#6](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/6).
  * Supports `ruby_package` in `.proto` files
- * Supports various protoc command line [configuration options](https://github.com/collectiveidea/protoc-gen-twirp_ruby?tab=readme-ov-file#options).
-
+ * Supports various protoc command line [configuration options](#options).
 
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `bundle exec rake spec` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
 
-For continued development purposes, we can route `protoc` to the local repo code for the plugin and generate against the example via:
+To experiment with development changes, route `protoc` to the local plugin when generating code
+via the `--plugin=protoc-gen-twirp_ruby=./exe/protoc-gen-twirp_ruby` option. For example:
 
 ```bash
 protoc --plugin=protoc-gen-twirp_ruby=./exe/protoc-gen-twirp_ruby --ruby_out=. --twirp_ruby_out=. ./example/hello_world.proto
 ```
 
-The local code for the gem can also be installed via `bundle exec rake install` to omit the `--plugin=protoc-gen-twirp_ruby=` option from `protoc`:
+Alternatively, install the local gem before invoking `protoc`:
 
 ```bash
 bundle exec rake install
@@ -110,14 +110,13 @@ To release a new version:
  * Submit a PR with the following changes (see [#30](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/30)):
    * Update the version number in `version.rb`
    * Update the CHANGELOG.md
-       * Create a section for the new version and move the unreleased version there
-   * Re-generate the example:
-       * `protoc --plugin=protoc-gen-twirp_ruby=./exe/protoc-gen-twirp_ruby --ruby_out=. --twirp_ruby_out=. ./example/hello_world.proto`
+     * Create a section for the new version and move the unreleased version there
+   * Re-generate the example: `bundle exec rake example`
  * Once merged, run the release task from main. Note that we prepend `gem_push=no` to avoid
    pushing to RubyGems directly; our GitHub publish action will do this for us.
-    *  `gem_push=no bundle exec rake release`
+   *  `gem_push=no bundle exec rake release`
  * Create a GitHub release: 
-     * `gh release create v<version>`
+   * `gh release create v<version>`
      * Edit the release notes to link to the notes in the CHANGELOG.md for the version
 
 ## Contributing
