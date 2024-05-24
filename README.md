@@ -1,6 +1,7 @@
 [![Gem Version](https://img.shields.io/gem/v/protoc-gen-twirp_ruby.svg)](https://rubygems.org/gems/protoc-gen-twirp_ruby)
 [![Specs](https://github.com/collectiveidea/protoc-gen-twirp_ruby/actions/workflows/rspec.yml/badge.svg)](https://github.com/collectiveidea/protoc-gen-twirp_ruby/actions/workflows/rspec.yml)
 [![Ruby Style Guide](https://img.shields.io/badge/code_style-standard-brightgreen.svg)](https://github.com/standardrb/standard)
+[![Test Coverage](https://api.codeclimate.com/v1/badges/a0020a73103eedbe760c/test_coverage)](https://codeclimate.com/github/collectiveidea/protoc-gen-twirp_ruby/test_coverage)
 
 # protoc-gen-twirp_ruby - A `protoc` plugin for Twirp-Ruby.
 
