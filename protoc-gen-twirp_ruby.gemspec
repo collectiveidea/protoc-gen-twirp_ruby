@@ -33,6 +33,7 @@ Gem::Specification.new do |spec|
           example/
           proto/
           spec/
+          tasks/
           .git
           .rspec
           .standard
