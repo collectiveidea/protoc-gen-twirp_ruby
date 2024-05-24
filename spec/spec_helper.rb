@@ -1,5 +1,12 @@
 # frozen_string_literal: true
 
+if %w[t true yes y 1].include?(ENV["COVERAGE"])
+  require "simplecov"
+  SimpleCov.start do
+    enable_coverage :branch
+  end
+end
+
 require "rspec/file_fixtures"
 require "twirp/protoc_plugin"
 require "support/matchers/be_empty_scaffolding_matcher"
