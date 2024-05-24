@@ -1,5 +1,7 @@
 ## [Unreleased]
 
+- Update GitHub action to run specs on all supported Ruby versions - [#37](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/37)
+
 ## [1.1.1] - 2024-05-22
 
 - Remove unnecessary `racc` runtime dependency - [#33](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/33)
