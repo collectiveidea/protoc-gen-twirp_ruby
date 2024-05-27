@@ -104,19 +104,16 @@ protoc --ruby_out=. --twirp_ruby_out=. ./example/hello_world.proto
 
 ## Releasing
 
+Install the [GitHub CLI](https://cli.github.com): `brew install gh` or [follow the instructions](https://github.com/cli/cli#installation).
+
 To release a new version:
 
- * Submit a PR with the following changes (see [#30](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/30)):
+ * Submit a PR with the following changes (see e.g. [#30](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/30)):
    * Update the version number in `version.rb`
    * Update the CHANGELOG.md
      * Create a section for the new version and move the unreleased version there
    * Re-generate the example: `bundle exec rake example`
- * Once merged, run the release task from main. Note that we prepend `gem_push=no` to avoid
-   pushing to RubyGems directly; our GitHub publish action will do this for us.
-   *  `gem_push=no bundle exec rake release`
- * Create a GitHub release: 
-   * `gh release create v<version>`
-     * Edit the release notes to link to the notes in the CHANGELOG.md for the version
+ * Once merged and `main` is up-to-date, run `bundle exec rake release`.
 
 ## Contributing
 
