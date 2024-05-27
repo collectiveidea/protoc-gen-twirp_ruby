@@ -1,8 +1,28 @@
 # frozen_string_literal: true
 
+require "bundler/gem_tasks"
 require "date"
 require "rake"
 require "twirp/protoc_plugin/core_ext/string/to_anchor"
+
+# See: https://github.com/rubygems/bundler-features/issues/81
+# Remove the Bundler release task and override it with our own
+Rake::Task["release"].clear
+
+# Customize the release task originally defined at
+# https://github.com/rubygems/rubygems/blob/v3.5.10/bundler/lib/bundler/gem_helper.rb#L67
+#
+#  * Do NOT push to RubyGems (remove need to specify `gem_push=no` by
+#     removing `release:rubygem_push` dependency). The `release:source_control_push`
+#     task triggers a RubyGems release using our GitHub Action as a trusted publisher.
+#  * Create a GitHub release for the current version, with release notes
+desc "Creates a release tag, pushes the tag to GitHub (which auto-releases to RubyGems), and creates a GitHub release."
+task "release", [:remote] => %w[
+  build
+  release:guard_clean
+  release:source_control_push
+  release:create_github_release
+]
 
 desc "Gets the latest GitHub release version, e.g: v1.1.1"
 task "release:latest_github_release" do
