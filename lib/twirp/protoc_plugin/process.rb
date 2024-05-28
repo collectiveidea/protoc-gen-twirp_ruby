@@ -18,14 +18,18 @@ module Twirp
       def process(input)
         request = Google::Protobuf::Compiler::CodeGeneratorRequest.decode(input)
 
-        options = extract_options(request.parameter)
+        options, warnings = extract_options(request.parameter)
+
+        warnings.each do |warning|
+          $stderr << "WARNING: #{warning}"
+        end
 
         response = Google::Protobuf::Compiler::CodeGeneratorResponse.new
         response.supported_features = Google::Protobuf::Compiler::CodeGeneratorResponse::Feature::FEATURE_PROTO3_OPTIONAL
 
         request.proto_file.each do |proto_file| # proto_file: <Google::Protobuf::FileDescriptorProto>
           next unless request.file_to_generate.include?(proto_file.name)
-          next if options[:skip_empty] && !proto_file.has_service?
+          next unless proto_file.has_service? # do not generate when no services defined
 
           file = Google::Protobuf::Compiler::CodeGeneratorResponse::File.new
           file.name = proto_file.twirp_output_filename
@@ -39,19 +43,24 @@ module Twirp
 
       private
 
-      # @param params [String] the parameters from protoc command line in comma-separated stringified
-      #   array format, e.g. "some-flag,key1=value1".
+      # @param params [String] the parameters from `protoc` command line in comma-separated stringified
+      #   array format, e.g. "some-flag,key1=value1". For repeated command line options, `protoc` will
+      #   add the option multiple times, e.g. "some-flag,key1=value1,key1=twice,key2=value2".
       #
-      #   The only valid parameter is currently the optional "skip-empty" flag.
-      # @return [Hash{Symbol => Boolean, Symbol}]
-      #   * :skip_empty [Boolean] indicating whether generation should skip creating a twirp file
-      #       for proto files that contain no services. Default false.
-      #   * :generate [Symbol] one of: :service, :client, or :both. Default :both.
+      #   The only valid parameter is currently the optional "generate" parameter.
+      #
+      # @return [Array(Hash{Symbol => Symbol}, Array<String>?)] the extracted options as the first
+      #   element, and an array of any applicable warnings as the second element (or nil when no
+      #   warnings are present).
+      #
+      #   The first return value is a Hash that contains:
+      #     * :generate [Symbol] one of: :service, :client, or :both. Default :both.
+      #
       # @raise [ArgumentError] when a required parameter is missing, a parameter value is invalid, or
       #   an unrecognized parameter is present on the command line
       def extract_options(params)
+        warnings = []
         opts = {
-          skip_empty: false,
           generate: :both
         }
 
@@ -61,10 +70,9 @@ module Twirp
           # Limit the split to just separate the key out.
           key, value = param.split("=", 2)
           if key == "skip-empty"
-            unless value.nil? || value.empty?
-              raise ArgumentError, "Unexpected value passed to skip-empty flag: #{value}"
-            end
-            opts[:skip_empty] = true
+            # Ignore; this is now the default behavior. A future release will remove
+            # this flag entirely, and will raise an error instead of a warning.
+            warnings << "The `skip-empty` flag is deprecated and will be removed next release; it is now the default behavior."
           elsif key == "generate"
             if value.nil? || value.empty?
               raise ArgumentError, "Unexpected missing value for generate option. Please supply one of: service, client, both."
@@ -81,7 +89,7 @@ module Twirp
           end
         end
 
-        opts
+        [opts, warnings]
       end
     end
   end
