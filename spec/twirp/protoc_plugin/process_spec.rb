@@ -15,20 +15,6 @@ RSpec.describe Twirp::ProtocPlugin do
         end
       end
 
-      context "when passing the `skip-empty` flag" do
-        # Generate code gen request fixture:
-        #   `./spec/support/create_fixture -b -p skip-empty -f service_code_gen_request_skip_empty_flag_pb.bin ./spec/fixtures/service.proto`
-        let(:request_pb) { fixture("service_code_gen_request_skip_empty_flag_pb.bin").read }
-
-        it "outputs a deprecation warning to stderr" do
-          allow($stderr).to receive(:<<)
-
-          Twirp::ProtocPlugin.process(request_pb)
-
-          expect($stderr).to have_received(:<<).with("WARNING: The `skip-empty` flag is deprecated and will be removed next release; it is now the default behavior.")
-        end
-      end
-
       context "when passing an empty value for the generate flag" do
         # Generate code gen request fixture:
         #   `./spec/support/create_fixture -b -p generate= -f service_code_gen_request_generate_param_missing_value_pb.bin ./spec/fixtures/service.proto`

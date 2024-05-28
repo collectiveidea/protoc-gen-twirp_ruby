@@ -18,11 +18,7 @@ module Twirp
       def process(input)
         request = Google::Protobuf::Compiler::CodeGeneratorRequest.decode(input)
 
-        options, warnings = extract_options(request.parameter)
-
-        warnings.each do |warning|
-          $stderr << "WARNING: #{warning}"
-        end
+        options = extract_options(request.parameter)
 
         response = Google::Protobuf::Compiler::CodeGeneratorResponse.new
         response.supported_features = Google::Protobuf::Compiler::CodeGeneratorResponse::Feature::FEATURE_PROTO3_OPTIONAL
@@ -49,17 +45,12 @@ module Twirp
       #
       #   The only valid parameter is currently the optional "generate" parameter.
       #
-      # @return [Array(Hash{Symbol => Symbol}, Array<String>?)] the extracted options as the first
-      #   element, and an array of any applicable warnings as the second element (or nil when no
-      #   warnings are present).
-      #
-      #   The first return value is a Hash that contains:
-      #     * :generate [Symbol] one of: :service, :client, or :both. Default :both.
+      # @return Hash{Symbol => Symbol} the extracted options, a Hash that contains:
+      #   * :generate [Symbol] one of: :service, :client, or :both. Default :both.
       #
       # @raise [ArgumentError] when a required parameter is missing, a parameter value is invalid, or
       #   an unrecognized parameter is present on the command line
       def extract_options(params)
-        warnings = []
         opts = {
           generate: :both
         }
@@ -69,11 +60,7 @@ module Twirp
           # In the event value contains an =, we want to leave that intact.
           # Limit the split to just separate the key out.
           key, value = param.split("=", 2)
-          if key == "skip-empty"
-            # Ignore; this is now the default behavior. A future release will remove
-            # this flag entirely, and will raise an error instead of a warning.
-            warnings << "The `skip-empty` flag is deprecated and will be removed next release; it is now the default behavior."
-          elsif key == "generate"
+          if key == "generate"
             if value.nil? || value.empty?
               raise ArgumentError, "Unexpected missing value for generate option. Please supply one of: service, client, both."
             end
@@ -89,7 +76,7 @@ module Twirp
           end
         end
 
-        [opts, warnings]
+        opts
       end
     end
   end
