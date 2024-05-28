@@ -25,7 +25,7 @@ module Twirp
 
         request.proto_file.each do |proto_file| # proto_file: <Google::Protobuf::FileDescriptorProto>
           next unless request.file_to_generate.include?(proto_file.name)
-          next if options[:skip_empty] && !proto_file.has_service?
+          next unless proto_file.has_service? # do not generate when no services defined
 
           file = Google::Protobuf::Compiler::CodeGeneratorResponse::File.new
           file.name = proto_file.twirp_output_filename
@@ -39,19 +39,19 @@ module Twirp
 
       private
 
-      # @param params [String] the parameters from protoc command line in comma-separated stringified
-      #   array format, e.g. "some-flag,key1=value1".
+      # @param params [String] the parameters from `protoc` command line in comma-separated stringified
+      #   array format, e.g. "some-flag,key1=value1". For repeated command line options, `protoc` will
+      #   add the option multiple times, e.g. "some-flag,key1=value1,key1=twice,key2=value2".
       #
-      #   The only valid parameter is currently the optional "skip-empty" flag.
-      # @return [Hash{Symbol => Boolean, Symbol}]
-      #   * :skip_empty [Boolean] indicating whether generation should skip creating a twirp file
-      #       for proto files that contain no services. Default false.
+      #   The only valid parameter is currently the optional "generate" parameter.
+      #
+      # @return Hash{Symbol => Symbol} the extracted options, a Hash that contains:
       #   * :generate [Symbol] one of: :service, :client, or :both. Default :both.
+      #
       # @raise [ArgumentError] when a required parameter is missing, a parameter value is invalid, or
       #   an unrecognized parameter is present on the command line
       def extract_options(params)
         opts = {
-          skip_empty: false,
           generate: :both
         }
 
@@ -60,12 +60,7 @@ module Twirp
           # In the event value contains an =, we want to leave that intact.
           # Limit the split to just separate the key out.
           key, value = param.split("=", 2)
-          if key == "skip-empty"
-            unless value.nil? || value.empty?
-              raise ArgumentError, "Unexpected value passed to skip-empty flag: #{value}"
-            end
-            opts[:skip_empty] = true
-          elsif key == "generate"
+          if key == "generate"
             if value.nil? || value.empty?
               raise ArgumentError, "Unexpected missing value for generate option. Please supply one of: service, client, both."
             end
