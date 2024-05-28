@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- Make `skip-empty` the default behavior; Deprecate flag (to be removed next version) - [#40](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/40) 
 - Update GitHub action to run specs on all supported Ruby versions - [#37](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/37)
 
 ## [1.1.1] - 2024-05-22
