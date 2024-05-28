@@ -53,18 +53,16 @@ protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. ./path/to/service.proto
 
 You can configure the code generation. Pass options by specifying `--twirp_ruby_opt=<option>` on the `protoc` command line.
 
- * `skip-empty`: Avoid generating a `_twirp.rb` for a `.proto` with no service definitions. By default, a `_twirp.rb`
-   file is generated for every proto file listed on the command line, even if the file is empty scaffolding. 
- * `generate=<service|client|both>`: Customize generated output to include generated services, clients, or both.
-   * `generate=service` - only generate `::Twirp::Service` subclass(es).
-   * `generate=client` - only generate `::Twirp::Client` subclass(es).
-   * `generate=both` - generate both services and clients. This is the default option to preserve
-     backwards compatibility.
+ * `generate=<service|client|both>`: Customize generated output to include generated services, clients, or both. Optional,
+    defaults to both to preserve backwards compatibility.
+   * `generate=service` - only generate `::Twirp::Service`s.
+   * `generate=client` - only generate `::Twirp::Client`s.
+   * `generate=both` - default; generate both services and clients. 
 
-Example (with two options): 
+Example : 
 
 ```bash
-protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. --twirp_ruby_opt=generate=client --twirp_ruby_opt=skip-empty ./path/to/service.proto
+protoc --proto_path=. --ruby_out=. --twirp_ruby_out=. --twirp_ruby_opt=generate=client ./path/to/service.proto
 ```
 
 ## Migrating from the Go module
@@ -84,7 +82,7 @@ that might affect migration include:
  * Generated output code is in [standardrb style](https://github.com/standardrb/standard).
  * Generated service and client class names are improved for well-named protobuf services. See [#6](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/6).
  * Supports `ruby_package` in `.proto` files
- * Supports various protoc command line [configuration options](#options).
+ * Supports protoc command line [configuration options](#options).
 
 ## Development
 
