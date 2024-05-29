@@ -1,5 +1,6 @@
 ## [Unreleased]
 
+- Streamline gem release with rake task - [#41](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/41)
 - Make `skip-empty` the default behavior; remove recognizing the option flag - [#40](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/40) 
 - Update GitHub action to run specs on all supported Ruby versions - [#37](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/37)
 
