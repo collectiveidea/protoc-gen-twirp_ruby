@@ -24,5 +24,6 @@ jobs:
           bundler-cache: true
           ruby-version: ruby
 
-      # Release
-      - uses: rubygems/release-gem@v1
+      # Build and Release
+      - name: Build and Release to RubyGems
+        run: bundle exec rake build release:rubygem_push
