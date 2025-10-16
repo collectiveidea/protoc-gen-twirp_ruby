@@ -30,7 +30,7 @@ proto_files = parser.parse!(into: options)
 filename = options[:filename]
 fail "Missing filename. Must specify `-f` option with a valid value." if filename.nil? || filename.empty?
 # Convert all invalid file name characters to "_"
-filename = filename.gsub(/[\x00\/\\:\*\?\"<>\|]/, "_")
+filename = filename.gsub(/[\x00\/\\:*?"<>|]/, "_")
 
 binary = options[:binary]
 text = options[:text]

@@ -285,7 +285,7 @@ RSpec.describe Google::Protobuf::FileDescriptorProto do
 
     it "works with a package that has a leading dot" do
       constants = call_private_method_with(".some.example.api")
-      expect(constants).to eq(%W[#{""} Some Example Api])
+      expect(constants).to eq(%W[#{""} Some Example Api]) # rubocop:disable Lint/EmptyInterpolation
     end
 
     it "works with a top-level message without a package" do

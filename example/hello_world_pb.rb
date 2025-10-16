@@ -7,7 +7,7 @@ require 'google/protobuf'
 
 descriptor_data = "\n\x19\x65xample/hello_world.proto\x12\x13\x65xample.hello_world\"\x1c\n\x0cHelloRequest\x12\x0c\n\x04name\x18\x01 \x01(\t\" \n\rHelloResponse\x12\x0f\n\x07message\x18\x01 \x01(\t2c\n\x11HelloWorldService\x12N\n\x05Hello\x12!.example.hello_world.HelloRequest\x1a\".example.hello_world.HelloResponseb\x06proto3"
 
-pool = Google::Protobuf::DescriptorPool.generated_pool
+pool = ::Google::Protobuf::DescriptorPool.generated_pool
 pool.add_serialized_file(descriptor_data)
 
 module Example
