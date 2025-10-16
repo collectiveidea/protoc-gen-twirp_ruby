@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - No notable changes since last release
 
+## [1.2.1] - 2025-10-16
+
+- Add Ruby 3.4 to build matrix; Update to `protoc` 32.1 - [#44](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/44) 
+
 ## [1.2.0] - 2024-05-29
 
 - Streamline gem release with rake task - [#41](https://github.com/collectiveidea/protoc-gen-twirp_ruby/pull/41)
