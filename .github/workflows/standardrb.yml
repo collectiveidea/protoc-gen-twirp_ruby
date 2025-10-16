@@ -8,7 +8,7 @@ on:
   pull_request:
 
 jobs:
-  build:
+  lint:
     runs-on: ubuntu-latest
 
     steps:
@@ -19,5 +19,6 @@ jobs:
           ruby-version: 3.4.7
           bundler-cache: true
           cache-version: 1
+
       - name: Run Standard Ruby
         run: bundle exec rake standard
